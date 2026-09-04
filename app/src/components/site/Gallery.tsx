@@ -1,8 +1,11 @@
 const SLIDES = [
-  { src: "/assets/hero.jpg", alt: "RilekLU industrial loft living room at dusk with a pool table" },
-  { src: "/assets/balcony-night.jpg", alt: "RilekLU balcony at night overlooking the city" },
-  { src: "/assets/bedroom.jpg", alt: "RilekLU bedroom with a queen bed and two single beds" },
-  { src: "/assets/bathroom.jpg", alt: "RilekLU bathroom with a rain shower" },
+  {
+    src: "/assets/hero.jpg",
+    alt: "RilekLU's living room with brick accent wall and hanging pendant lights",
+  },
+  { src: "/assets/pool-table.jpg", alt: "The pool table inside RilekLU" },
+  { src: "/assets/kitchen.jpg", alt: "RilekLU's kitchenette" },
+  { src: "/assets/balcony.jpg", alt: "One of RilekLU's two balconies" },
 ];
 
 // Horizontal-scroll film-strip — a distinct layout family from the bento

@@ -1,17 +1,10 @@
-import {
-  IconBalcony,
-  IconBath,
-  IconBed,
-  IconController,
-  IconFridge,
-  IconTv,
-  IconWifi,
-} from "./icons";
+import { IconBalcony, IconBath, IconBed, IconTv, IconWifi } from "./icons";
 
 // Asymmetric bento: content-sized cells, not a repeated equal-card grid.
-// Photo cells (pool table / balcony / bedroom) carry the real visual weight;
-// the rest are icon tiles on the ink-2 surface. Mobile collapses to a single
-// column explicitly (grid-cols-1 base, spans reset at md:).
+// Photo cells carry the real visual weight and are all real unit photos
+// (see design-brief.md "Facts lock"); the rest are icon tiles on the ink-2
+// surface. Mobile collapses to a single column explicitly (grid-cols-1
+// base, spans reset at md:).
 export function Amenities() {
   return (
     <section id="amenities" className="bg-ink py-24 md:py-32">
@@ -26,8 +19,8 @@ export function Amenities() {
         <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-6 md:grid-rows-2">
           <figure className="group relative col-span-1 row-span-2 overflow-hidden rounded-3xl md:col-span-3">
             <img
-              src="/assets/games-nook.jpg"
-              alt="Pool table and PS4 games nook inside RilekLU"
+              src="/assets/pool-table.jpg"
+              alt="The pool table in RilekLU's living room, with cues and balls set up"
               className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105 md:h-full"
               loading="lazy"
             />
@@ -39,13 +32,20 @@ export function Amenities() {
             </figcaption>
           </figure>
 
-          <div className="col-span-1 rounded-3xl bg-ink-2 p-6 md:col-span-3">
-            <IconController className="h-7 w-7 text-coral" />
-            <p className="mt-4 text-lg font-semibold text-cream">PS4 with 2 controllers</p>
-            <p className="mt-1 text-sm leading-relaxed text-cream-dim">
-              PS Plus subscribed. Additional charge applies for PS4 use.
-            </p>
-          </div>
+          <figure className="group relative col-span-1 overflow-hidden rounded-3xl md:col-span-3">
+            <img
+              src="/assets/ps4.jpg"
+              alt="PS4 controllers and games included with RilekLU"
+              className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 to-transparent p-5">
+              <p className="text-lg font-semibold text-cream">PS4 with 2 controllers</p>
+              <p className="mt-1 text-sm leading-relaxed text-cream-dim">
+                PS Plus subscribed. Additional charge applies for PS4 use.
+              </p>
+            </figcaption>
+          </figure>
 
           <div className="col-span-1 rounded-3xl bg-ink-2 p-6 md:col-span-2">
             <IconTv className="h-7 w-7 text-coral" />
@@ -57,8 +57,8 @@ export function Amenities() {
 
           <figure className="group relative col-span-1 overflow-hidden rounded-3xl md:col-span-2">
             <img
-              src="/assets/balcony-night.jpg"
-              alt="RilekLU balcony at night with string lights and a city skyline view"
+              src="/assets/balcony.jpg"
+              alt="One of RilekLU's two balconies with artificial turf and a pebble path"
               className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
             />
@@ -80,7 +80,7 @@ export function Amenities() {
           <figure className="group relative overflow-hidden rounded-3xl">
             <img
               src="/assets/bedroom.jpg"
-              alt="RilekLU bedroom with a queen bed and two single beds"
+              alt="RilekLU bedroom with beds for up to 5 guests"
               className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
             />
@@ -97,13 +97,17 @@ export function Amenities() {
             </p>
           </div>
 
-          <div className="rounded-3xl bg-ink-2 p-6">
-            <IconFridge className="h-7 w-7 text-coral" />
-            <p className="mt-4 text-lg font-semibold text-cream">Kitchen &amp; fridge</p>
-            <p className="mt-1 text-sm leading-relaxed text-cream-dim">
-              Fridge with freezer, tri-colour living room lighting.
-            </p>
-          </div>
+          <figure className="group relative overflow-hidden rounded-3xl">
+            <img
+              src="/assets/kitchen.jpg"
+              alt="RilekLU kitchenette with fridge, microwave and sink"
+              className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 to-transparent p-5">
+              <p className="text-lg font-semibold text-cream">Kitchen &amp; fridge</p>
+            </figcaption>
+          </figure>
         </div>
 
         <div className="mt-4 flex items-center gap-4 rounded-3xl bg-ink-2 px-6 py-5">

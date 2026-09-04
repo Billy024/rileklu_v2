@@ -24,8 +24,8 @@ export function About() {
         <div className="order-1 overflow-hidden rounded-3xl md:order-2">
           <div ref={imgRef} className="parallax-layer scale-[1.2]">
             <img
-              src="/assets/games-nook.jpg"
-              alt="RilekLU's industrial-styled games nook with pool cues and a television"
+              src="/assets/pool-table.jpg"
+              alt="RilekLU's living room with the pool table"
               className="h-full w-full object-cover"
               loading="lazy"
             />
