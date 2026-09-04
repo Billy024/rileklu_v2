@@ -1,4 +1,4 @@
-import { IconBalcony, IconBath, IconBed, IconTv, IconWifi } from "./icons";
+import { IconBalcony, IconBed, IconWifi } from "./icons";
 
 // Asymmetric bento: content-sized cells, not a repeated equal-card grid.
 // Photo cells carry the real visual weight and are all real unit photos
@@ -47,13 +47,17 @@ export function Amenities() {
             </figcaption>
           </figure>
 
-          <div className="col-span-1 rounded-3xl bg-ink-2 p-6 md:col-span-2">
-            <IconTv className="h-7 w-7 text-coral" />
-            <p className="mt-4 text-lg font-semibold text-cream">32&Prime; TV &amp; Netflix</p>
-            <p className="mt-1 text-sm leading-relaxed text-cream-dim">
-              Unlimited high-speed WiFi included.
-            </p>
-          </div>
+          <figure className="group relative col-span-1 overflow-hidden rounded-3xl md:col-span-2">
+            <img
+              src="/assets/tv.jpg"
+              alt="RilekLU's 32-inch TV set up for Netflix"
+              className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 to-transparent p-5">
+              <p className="text-lg font-semibold text-cream">32&Prime; TV &amp; Netflix</p>
+            </figcaption>
+          </figure>
 
           <figure className="group relative col-span-1 overflow-hidden rounded-3xl md:col-span-2">
             <img
@@ -89,13 +93,20 @@ export function Amenities() {
             </figcaption>
           </figure>
 
-          <div className="rounded-3xl bg-ink-2 p-6">
-            <IconBath className="h-7 w-7 text-coral" />
-            <p className="mt-4 text-lg font-semibold text-cream">2 bathrooms</p>
-            <p className="mt-1 text-sm leading-relaxed text-cream-dim">
-              Rain shower set in the lower bathroom.
-            </p>
-          </div>
+          <figure className="group relative overflow-hidden rounded-3xl">
+            <img
+              src="/assets/bathroom.jpg"
+              alt="RilekLU bathroom with a rain shower"
+              className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 to-transparent p-5">
+              <p className="text-lg font-semibold text-cream">2 bathrooms</p>
+              <p className="mt-1 text-sm leading-relaxed text-cream-dim">
+                Rain shower in the lower bathroom.
+              </p>
+            </figcaption>
+          </figure>
 
           <figure className="group relative overflow-hidden rounded-3xl">
             <img
