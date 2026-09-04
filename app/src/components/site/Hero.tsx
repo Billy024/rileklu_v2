@@ -36,7 +36,7 @@ export function Hero() {
       <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-5 pb-20 pt-28 md:px-8 md:pb-28">
         <div
           ref={contentRef}
-          className="parallax-layer max-w-2xl [text-shadow:0_2px_16px_rgba(15,34,39,0.65)]"
+          className="parallax-layer max-w-2xl rounded-3xl bg-ink/35 p-6 backdrop-blur-sm md:p-8"
         >
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-coral">
             Damansara Perdana &middot; Entire Loft For 5
