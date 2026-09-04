@@ -77,12 +77,15 @@ function buildHead(meta: AppMeta) {
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title },
       { name: "description", content: description },
-      { name: "author", content: "Higgsfield" },
+      { name: "author", content: "RilekLU" },
+      { name: "theme-color", content: "#0f2227" },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
+      { property: "og:site_name", content: "RilekLU" },
+      { property: "og:locale", content: "en_MY" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: ogImage ? "summary_large_image" : "summary" },
-      { name: "twitter:site", content: "@Higgsfield" },
       ...(ogImage
         ? [
             { property: "og:image", content: ogImage },
@@ -94,6 +97,12 @@ function buildHead(meta: AppMeta) {
       ...(ogVideo ? [{ property: "og:video", content: ogVideo }] : []),
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" as const },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
       ...(favicon ? [{ rel: "icon", href: favicon }] : []),
     ],
@@ -161,14 +170,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="default-dark" style={{ colorScheme: "dark" }}>
-      {/* Marketplace apps are permanently dark: data-theme is pinned on <html>
-          above. Do not add quanta's bootstrapScript/ThemeController, a theme
-          toggle, or a light mode. */}
+    <html lang="en" style={{ colorScheme: "dark" }}>
+      {/* RilekLU is a single dark industrial-loft theme, page-wide, by design
+          (see design-brief.md) — not a toggle-able light/dark app theme. */}
       <head>
         <HeadContent />
       </head>
-      <body className="bg-q-background-primary text-q-text-primary">
+      <body className="bg-ink text-cream font-sans antialiased">
         {children}
         <Scripts />
       </body>

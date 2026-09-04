@@ -111,3 +111,61 @@
     border-color: var(--hf-color-border-default);
   }
 }
+
+/* ---------------------------------------------------------------------- *
+ * RilekLU brand theme. This is a `type: "website"` build: everything below
+ * is the site's own independent design system, layered on top (never
+ * removing) the scaffold's Quanta wiring above. Only these tokens/classes
+ * are used by page components — no q-* utilities in app code.
+ * ---------------------------------------------------------------------- */
+@theme {
+  --color-ink: #0f2227;
+  --color-ink-2: #16333a;
+  --color-ink-3: #1d3c44;
+  --color-cream: #f4eee2;
+  --color-cream-dim: #cfc6b4;
+  --color-coral: #ff5c72;
+  --color-coral-deep: #e1435c;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-cream);
+    font-family: var(--font-sans);
+  }
+}
+
+@layer utilities {
+  .parallax-layer {
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .parallax-layer {
+      transform: none !important;
+    }
+  }
+
+  .rileklu-marquee-track {
+    animation: rileklu-marquee 28s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rileklu-marquee-track {
+      animation: none;
+    }
+  }
+}
+
+@keyframes rileklu-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

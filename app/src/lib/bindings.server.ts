@@ -24,6 +24,11 @@ type AppEnv = {
   CONTAINER?: DurableObjectNamespace;
   HF_ENV?: string;
   APP_SLUG?: string;
+  // Set via website_secrets (Higgsfield) / the host's env vars (Replit): the
+  // host's private Airbnb calendar export URL (Airbnb host dashboard ->
+  // Calendar -> this listing -> Availability settings -> Connect calendars ->
+  // Export calendar). Feature degrades gracefully when unset.
+  AIRBNB_ICAL_URL?: string;
 };
 
 export function bindings(): AppEnv {
