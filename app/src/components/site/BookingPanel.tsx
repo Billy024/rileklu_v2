@@ -168,7 +168,7 @@ export function BookingPanel({ checkIn, checkOut }: { checkIn: Date; checkOut: D
         <ReserveNowButton onClick={handleReserve} disabled={!quote} loading={submitting} />
       </div>
       <p className="mt-3 text-center font-mono text-[11px] uppercase tracking-wide text-cream-dim">
-        Secure payment via ToyyibPay (sandbox)
+        Secure payment via ToyyibPay
       </p>
     </div>
   );

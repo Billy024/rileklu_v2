@@ -27,8 +27,8 @@ type AppEnv = {
   // Hostex Open API access token (Host Portal -> OpenAPI Settings -> Add new).
   // Powers live availability, live pricing, and direct-reservation creation.
   HOSTEX_ACCESS_TOKEN?: string;
-  // ToyyibPay user secret key (dev.toyyibpay.com sandbox, or the production
-  // key once live). Never sent to the client — used server-side only to
+  // ToyyibPay user secret key (production — see TOYYIBPAY_BASE_URL in
+  // site-config.ts). Never sent to the client — used server-side only to
   // create/verify bills.
   TOYYIBPAY_SECRET_KEY?: string;
 };

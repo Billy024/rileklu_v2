@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { SITE_URL } from "../site-config";
+import { SITE_URL, TESTING_FORCE_TOTAL_MYR } from "../site-config";
 import { quotePrice } from "./pricing";
 import type { FinalizeResult } from "./booking.server";
 
@@ -113,9 +113,14 @@ export const createBookingBill = createServerFn({ method: "POST" })
     const guestEmail = data.guestEmail.trim();
     const guestPhone = data.guestPhone.trim();
 
+    // TESTING_FORCE_TOTAL_MYR overrides only what ToyyibPay actually
+    // charges (to verify the real production flow cheaply) — the ledger
+    // below still records the real computed total.
+    const chargeAmount = TESTING_FORCE_TOTAL_MYR ?? quote.totalAmount;
+
     const bill = await createToyyibPayBill({
       orderId,
-      amountMyr: quote.totalAmount,
+      amountMyr: chargeAmount,
       guestName,
       guestEmail,
       guestPhone,
