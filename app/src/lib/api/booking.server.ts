@@ -8,12 +8,13 @@
 import {
   claimBookingForFinalization,
   getBookingByOrderId,
+  insertIncome,
   markBookingConfirmed,
   markBookingFailed,
   type BookingStatus,
 } from "../db.server";
 import { createHostexReservation } from "./hostex.server";
-import { getToyyibPayBillStatus } from "./toyyibpay.server";
+import { getToyyibPayTransaction } from "./toyyibpay.server";
 
 export type FinalizeResult = {
   status: BookingStatus | "not_found";
@@ -29,7 +30,7 @@ export type FinalizeResult = {
 // collected on our own site and used to prefill+lock ToyyibPay's checkout
 // (see toyyibpay.server.ts), so no extra lookup is needed for those.
 // `claimBookingForFinalization` guarantees only ONE of the two paths ever
-// actually calls Hostex for a given order.
+// actually calls Hostex (and records income) for a given order.
 export async function finalizeBooking(orderId: string): Promise<FinalizeResult> {
   const existing = await getBookingByOrderId(orderId);
   if (!existing) return { status: "not_found", reservationCode: null };
@@ -38,15 +39,15 @@ export async function finalizeBooking(orderId: string): Promise<FinalizeResult> 
   }
   if (!existing.bill_code) return { status: existing.status, reservationCode: null };
 
-  const billStatus = await getToyyibPayBillStatus(existing.bill_code);
+  const transaction = await getToyyibPayTransaction(existing.bill_code);
   // "failed" is a definite answer from ToyyibPay — record it as such rather
   // than leaving the booking (and the guest-facing copy) stuck on
   // "pending_payment", which reads as merely uncertain, not failed.
-  if (billStatus === "failed") {
+  if (transaction.status === "failed") {
     await markBookingFailed(orderId);
     return { status: "failed", reservationCode: null };
   }
-  if (billStatus !== "success") {
+  if (transaction.status !== "success") {
     // "pending" or "unknown" — genuinely undecided, not a failure.
     return { status: existing.status, reservationCode: null };
   }
@@ -54,6 +55,16 @@ export async function finalizeBooking(orderId: string): Promise<FinalizeResult> 
   const { claimed, booking } = await claimBookingForFinalization(orderId);
   if (!booking) return { status: "not_found", reservationCode: null };
   if (!claimed) return { status: booking.status, reservationCode: booking.hostex_reservation_code };
+
+  // Records what was ACTUALLY charged (real money, from ToyyibPay's own
+  // transaction record) — not booking.total_amount, which is the quoted
+  // price and can differ under a test price override.
+  await insertIncome({
+    orderId: booking.order_id,
+    billCode: existing.bill_code,
+    amountSen: transaction.amountSen ?? booking.total_amount,
+    transactionRef: transaction.transactionRef,
+  });
 
   const result = await createHostexReservation({
     checkInDate: booking.check_in_date,

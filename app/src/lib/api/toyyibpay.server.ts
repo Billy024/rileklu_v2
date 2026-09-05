@@ -58,12 +58,22 @@ export async function createToyyibPayBill(input: CreateBillInput): Promise<Creat
 
 export type BillTransactionStatus = "success" | "pending" | "failed" | "unknown";
 
-// Actively asks ToyyibPay whether a bill was actually paid — used as the
-// return-page's own reconciliation check, since ToyyibPay does not retry a
-// failed server-to-server callback on its own.
-export async function getToyyibPayBillStatus(billCode: string): Promise<BillTransactionStatus> {
+export type ToyyibPayTransaction = {
+  status: BillTransactionStatus;
+  amountSen: number | null; // the REAL amount actually charged, not any quoted/intended amount
+  transactionRef: string | null;
+};
+
+// Actively asks ToyyibPay whether a bill was actually paid (and for how
+// much) — used as the return-page's own reconciliation check, since
+// ToyyibPay does not retry a failed server-to-server callback on its own,
+// and as the source of truth for the income ledger (records what was
+// really charged, which can differ from the quoted amount during a test
+// price override).
+export async function getToyyibPayTransaction(billCode: string): Promise<ToyyibPayTransaction> {
+  const empty: ToyyibPayTransaction = { status: "unknown", amountSen: null, transactionRef: null };
   const { TOYYIBPAY_SECRET_KEY } = bindings();
-  if (!TOYYIBPAY_SECRET_KEY) return "unknown";
+  if (!TOYYIBPAY_SECRET_KEY) return empty;
 
   const body = new URLSearchParams({ userSecretKey: TOYYIBPAY_SECRET_KEY, billCode });
   const res = await fetch(`${TOYYIBPAY_BASE_URL}/index.php/api/getBillTransactions`, {
@@ -71,12 +81,30 @@ export async function getToyyibPayBillStatus(billCode: string): Promise<BillTran
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
-  if (!res.ok) return "unknown";
+  if (!res.ok) return empty;
 
-  const json = (await res.json()) as Array<{ billpaymentStatus?: string }> | unknown;
-  const status = Array.isArray(json) ? json[0]?.billpaymentStatus : undefined;
-  if (status === "1") return "success";
-  if (status === "3") return "failed";
-  if (status === "2" || status === "4") return "pending";
-  return "unknown";
+  const json = (await res.json()) as
+    | Array<{
+        billpaymentStatus?: string;
+        billpaymentAmount?: string;
+        billpaymentInvoiceNo?: string;
+      }>
+    | unknown;
+  const record = Array.isArray(json) ? json[0] : undefined;
+  if (!record) return empty;
+
+  const statusCode = record.billpaymentStatus;
+  const status: BillTransactionStatus =
+    statusCode === "1"
+      ? "success"
+      : statusCode === "3"
+        ? "failed"
+        : statusCode
+          ? "pending"
+          : "unknown";
+  const amountSen = record.billpaymentAmount
+    ? Math.round(parseFloat(record.billpaymentAmount) * 100)
+    : null;
+
+  return { status, amountSen, transactionRef: record.billpaymentInvoiceNo ?? null };
 }

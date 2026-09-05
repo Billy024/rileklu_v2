@@ -31,6 +31,9 @@ type AppEnv = {
   // site-config.ts). Never sent to the client — used server-side only to
   // create/verify bills.
   TOYYIBPAY_SECRET_KEY?: string;
+  // Gates /admin (booking deletion + analytics). Checked server-side on
+  // every admin server function call — never trust a client-side gate alone.
+  ADMIN_PASSWORD?: string;
 };
 
 export function bindings(): AppEnv {

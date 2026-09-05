@@ -1,0 +1,66 @@
+import { createServerFn } from "@tanstack/react-start";
+
+// Same pattern as booking.functions.ts: every server-only dependency is
+// imported dynamically INSIDE each handler, never at the top of this file,
+// since this file is reachable from a client-rendered route (the /admin
+// page) and a top-level `.server.ts` import here would leak into the
+// client bundle.
+
+export type AdminAuthedInput = { password: string };
+
+// Every handler below re-checks the password itself — the page's own
+// "logged in" state is just UI convenience, not the real security
+// boundary. Each is independently callable over HTTP regardless of what
+// the page shows.
+export const getAdminAnalytics = createServerFn({ method: "GET" })
+  .validator((input: AdminAuthedInput) => input)
+  .handler(async ({ data }) => {
+    const { verifyAdminPassword } = await import("../admin-auth.server");
+    if (!verifyAdminPassword(data.password)) throw new Error("unauthorized");
+    const { getMonthlyAnalytics } = await import("../db.server");
+    return getMonthlyAnalytics();
+  });
+
+export const listAdminBookings = createServerFn({ method: "GET" })
+  .validator((input: AdminAuthedInput) => input)
+  .handler(async ({ data }) => {
+    const { verifyAdminPassword } = await import("../admin-auth.server");
+    if (!verifyAdminPassword(data.password)) throw new Error("unauthorized");
+    const { listAllBookings } = await import("../db.server");
+    return listAllBookings();
+  });
+
+export const listAdminIncome = createServerFn({ method: "GET" })
+  .validator((input: AdminAuthedInput) => input)
+  .handler(async ({ data }) => {
+    const { verifyAdminPassword } = await import("../admin-auth.server");
+    if (!verifyAdminPassword(data.password)) throw new Error("unauthorized");
+    const { listAllIncome } = await import("../db.server");
+    return listAllIncome();
+  });
+
+export type DeleteBookingInput = AdminAuthedInput & { orderId: string };
+export type DeleteBookingResult = { ok: boolean; error?: string };
+
+// Best-effort cancels the Hostex reservation (if one was ever created) so
+// the nights actually free up, then hard-deletes the ledger row. Never
+// touches `income` — a real payment stays on record even after its
+// booking is removed.
+export const deleteAdminBooking = createServerFn({ method: "POST" })
+  .validator((input: DeleteBookingInput) => input)
+  .handler(async ({ data }): Promise<DeleteBookingResult> => {
+    const { verifyAdminPassword } = await import("../admin-auth.server");
+    if (!verifyAdminPassword(data.password)) throw new Error("unauthorized");
+
+    const { getBookingByOrderId, deleteBookingRow } = await import("../db.server");
+    const booking = await getBookingByOrderId(data.orderId);
+    if (!booking) return { ok: false, error: "not_found" };
+
+    if (booking.hostex_reservation_code) {
+      const { cancelHostexReservation } = await import("./hostex.server");
+      await cancelHostexReservation(booking.hostex_reservation_code);
+    }
+
+    await deleteBookingRow(data.orderId);
+    return { ok: true };
+  });
