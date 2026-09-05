@@ -220,14 +220,15 @@ export async function createHostexReservation(
   return { ok: true, reservationCode: reservation.reservation_code, status: reservation.status };
 }
 
-// Reverses a reservation created in error (used for the one-off live test
-// the owner will run together with us, and as a fallback if a Hostex write
-// ever needs undoing after the fact).
-export async function cancelHostexReservation(stayCode: string): Promise<boolean> {
+// Reverses a reservation created in error — used by the admin panel's
+// delete-booking tool. Hostex's cancel endpoint is DELETE /reservations/
+// {reservation_code} (confirmed live; a POST .../cancel variant some docs
+// suggest 404s in practice).
+export async function cancelHostexReservation(reservationCode: string): Promise<boolean> {
   const { HOSTEX_ACCESS_TOKEN } = bindings();
   if (!HOSTEX_ACCESS_TOKEN) return false;
-  const res = await fetch(`${HOSTEX_BASE_URL}/reservations/${stayCode}/cancel`, {
-    method: "POST",
+  const res = await fetch(`${HOSTEX_BASE_URL}/reservations/${reservationCode}`, {
+    method: "DELETE",
     headers: hostexHeaders(HOSTEX_ACCESS_TOKEN),
   });
   return res.ok;

@@ -42,10 +42,11 @@ export const listAdminIncome = createServerFn({ method: "GET" })
 export type DeleteBookingInput = AdminAuthedInput & { orderId: string };
 export type DeleteBookingResult = { ok: boolean; error?: string };
 
-// Best-effort cancels the Hostex reservation (if one was ever created) so
-// the nights actually free up, then hard-deletes the ledger row. Never
-// touches `income` — a real payment stays on record even after its
-// booking is removed.
+// Cancels the Hostex reservation first (if one was ever created) and only
+// hard-deletes the ledger row once that succeeds — a booking still live on
+// Hostex must never disappear from our own records while the nights stay
+// blocked there. Never touches `income` — a real payment stays on record
+// even after its booking is removed.
 export const deleteAdminBooking = createServerFn({ method: "POST" })
   .validator((input: DeleteBookingInput) => input)
   .handler(async ({ data }): Promise<DeleteBookingResult> => {
@@ -58,7 +59,8 @@ export const deleteAdminBooking = createServerFn({ method: "POST" })
 
     if (booking.hostex_reservation_code) {
       const { cancelHostexReservation } = await import("./hostex.server");
-      await cancelHostexReservation(booking.hostex_reservation_code);
+      const cancelled = await cancelHostexReservation(booking.hostex_reservation_code);
+      if (!cancelled) return { ok: false, error: "hostex_cancel_failed" };
     }
 
     await deleteBookingRow(data.orderId);
