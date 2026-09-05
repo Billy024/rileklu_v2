@@ -125,13 +125,21 @@ function AdminPage() {
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tighter text-cream">RilekLU Admin</h1>
-          <button
-            type="button"
-            onClick={() => void loadAll(password)}
-            className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-5">
+            <a
+              href="/admin/history"
+              className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
+            >
+              Historical Performance &rarr;
+            </a>
+            <button
+              type="button"
+              onClick={() => void loadAll(password)}
+              className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         <h2 className="mt-10 font-mono text-xs uppercase tracking-[0.25em] text-coral">

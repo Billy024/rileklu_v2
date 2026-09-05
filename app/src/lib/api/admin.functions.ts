@@ -39,6 +39,53 @@ export const listAdminIncome = createServerFn({ method: "GET" })
     return listAllIncome();
   });
 
+export type AdminHistoryResult = {
+  rows: Array<{ month: string; bookings: number; nights: number; revenue_sen: number }>;
+  error: string | null;
+};
+
+// Full-account, all-channel monthly history (Airbnb/Booking.com/direct) —
+// distinct from getAdminAnalytics, which only reflects bookings made
+// through this website's own ledger. On an empty cache, does a one-time
+// historical backfill from Hostex; every call also refreshes the recent
+// window live, so a booking made moments ago is already reflected.
+export const getAdminHistory = createServerFn({ method: "GET" })
+  .validator((input: AdminAuthedInput) => input)
+  .handler(async ({ data }): Promise<AdminHistoryResult> => {
+    const { verifyAdminPassword } = await import("../admin-auth.server");
+    if (!verifyAdminPassword(data.password)) throw new Error("unauthorized");
+
+    const { isMonthlyHistoryCacheEmpty, upsertMonthlyHistoryCache, listMonthlyHistoryCache } =
+      await import("../db.server");
+    const {
+      fetchHostexMonthlyHistory,
+      HISTORY_BACKFILL_DAYS_BACK,
+      HISTORY_LIVE_WINDOW_DAYS_BACK,
+      HISTORY_DAYS_FORWARD,
+    } = await import("./hostex.server");
+
+    let error: string | null = null;
+
+    if (await isMonthlyHistoryCacheEmpty()) {
+      const backfill = await fetchHostexMonthlyHistory(
+        HISTORY_BACKFILL_DAYS_BACK,
+        HISTORY_DAYS_FORWARD,
+      );
+      if (backfill.ok) await upsertMonthlyHistoryCache(backfill.rows);
+      else error = backfill.error;
+    }
+
+    const live = await fetchHostexMonthlyHistory(
+      HISTORY_LIVE_WINDOW_DAYS_BACK,
+      HISTORY_DAYS_FORWARD,
+    );
+    if (live.ok) await upsertMonthlyHistoryCache(live.rows);
+    else error = error ?? live.error;
+
+    const rows = await listMonthlyHistoryCache();
+    return { rows, error };
+  });
+
 export type DeleteBookingInput = AdminAuthedInput & { orderId: string };
 export type DeleteBookingResult = { ok: boolean; error?: string };
 

@@ -14,6 +14,7 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BookingReturnRouteImport } from './routes/booking.return'
+import { Route as AdminHistoryRouteImport } from './routes/admin.history'
 import { Route as ApiToyyibpayCallbackRouteImport } from './routes/api/toyyibpay-callback'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -41,6 +42,11 @@ const BookingReturnRoute = BookingReturnRouteImport.update({
   path: '/booking/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminHistoryRoute = AdminHistoryRouteImport.update({
+  id: '/admin/history',
+  path: '/admin/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiToyyibpayCallbackRoute = ApiToyyibpayCallbackRouteImport.update({
   id: '/api/toyyibpay-callback',
   path: '/api/toyyibpay-callback',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
   '/booking/return': typeof BookingReturnRoute
+  '/admin/history': typeof AdminHistoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
   '/booking/return': typeof BookingReturnRoute
+  '/admin/history': typeof AdminHistoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
   '/booking/return': typeof BookingReturnRoute
+  '/admin/history': typeof AdminHistoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/api/toyyibpay-callback'
     | '/booking/return'
+    | '/admin/history'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/api/toyyibpay-callback'
     | '/booking/return'
+    | '/admin/history'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/api/toyyibpay-callback'
     | '/booking/return'
+    | '/admin/history'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   ApiToyyibpayCallbackRoute: typeof ApiToyyibpayCallbackRoute
   BookingReturnRoute: typeof BookingReturnRoute
+  AdminHistoryRoute: typeof AdminHistoryRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/history': {
+      id: '/admin/history'
+      path: '/admin/history'
+      fullPath: '/admin/history'
+      preLoaderRoute: typeof AdminHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   ApiToyyibpayCallbackRoute: ApiToyyibpayCallbackRoute,
   BookingReturnRoute: BookingReturnRoute,
+  AdminHistoryRoute: AdminHistoryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

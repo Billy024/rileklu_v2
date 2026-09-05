@@ -247,3 +247,51 @@ export async function getMonthlyAnalytics(): Promise<MonthlyAnalyticsRow[]> {
     };
   });
 }
+
+// ---- Monthly history cache (Hostex-wide, all channels) --------------------
+// Backs the admin history page. Recent months are overwritten with a fresh
+// Hostex pull on every view; older months are written once, during the
+// initial backfill, and then just read back — so the page never has to
+// re-query years of reservations on every load.
+
+export type MonthlyHistoryCacheRow = {
+  month: string; // YYYY-MM
+  bookings: number;
+  nights: number;
+  revenue_sen: number;
+};
+
+export async function isMonthlyHistoryCacheEmpty(): Promise<boolean> {
+  const { DB } = bindings();
+  if (!DB) return true;
+  const row = await DB.prepare(`SELECT COUNT(*) AS n FROM monthly_history_cache`).first<{
+    n: number;
+  }>();
+  return (row?.n ?? 0) === 0;
+}
+
+export async function upsertMonthlyHistoryCache(
+  rows: Array<{ month: string; bookings: number; nights: number; revenueSen: number }>,
+): Promise<void> {
+  const { DB } = bindings();
+  if (!DB || rows.length === 0) return;
+  const stmt = DB.prepare(
+    `INSERT INTO monthly_history_cache (month, bookings, nights, revenue_sen, updated_at)
+     VALUES (?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(month) DO UPDATE SET
+       bookings = excluded.bookings,
+       nights = excluded.nights,
+       revenue_sen = excluded.revenue_sen,
+       updated_at = excluded.updated_at`,
+  );
+  await DB.batch(rows.map((r) => stmt.bind(r.month, r.bookings, r.nights, r.revenueSen)));
+}
+
+export async function listMonthlyHistoryCache(): Promise<MonthlyHistoryCacheRow[]> {
+  const { DB } = bindings();
+  if (!DB) return [];
+  const { results } = await DB.prepare(
+    `SELECT month, bookings, nights, revenue_sen FROM monthly_history_cache ORDER BY month ASC`,
+  ).all<MonthlyHistoryCacheRow>();
+  return results ?? [];
+}

@@ -26,6 +26,7 @@ type HostexReservation = {
   check_in_date: string;
   check_out_date: string;
   status: string;
+  payment?: { received_amount?: number; total_amount?: number; currency?: string };
 };
 
 function toDateStr(d: Date) {
@@ -33,15 +34,14 @@ function toDateStr(d: Date) {
 }
 
 // The check-in date range is capped at 180 days per request, so page through
-// a bounded window in ~179-day chunks: a 30-day lookback (catches a stay
-// already in progress whose checkout is still ahead) through 400 days
-// forward (comfortably covers however far a guest navigates the calendar).
-function buildDateWindows(): Array<[string, string]> {
+// a bounded window in ~179-day chunks, from `daysBack` days ago through
+// `daysForward` days ahead.
+function buildDateWindows(daysBack: number, daysForward: number): Array<[string, string]> {
   const windows: Array<[string, string]> = [];
   const start = new Date();
-  start.setUTCDate(start.getUTCDate() - 30);
+  start.setUTCDate(start.getUTCDate() - daysBack);
   const final = new Date();
-  final.setUTCDate(final.getUTCDate() + 400);
+  final.setUTCDate(final.getUTCDate() + daysForward);
   let cursor = start;
   while (cursor <= final) {
     const windowEnd = new Date(Math.min(cursor.getTime() + 179 * 86_400_000, final.getTime()));
@@ -51,9 +51,12 @@ function buildDateWindows(): Array<[string, string]> {
   return windows;
 }
 
-async function fetchAllReservations(token: string): Promise<HostexReservation[]> {
+async function fetchReservationsForWindows(
+  token: string,
+  windows: Array<[string, string]>,
+): Promise<HostexReservation[]> {
   const byCode = new Map<string, HostexReservation>();
-  for (const [start, end] of buildDateWindows()) {
+  for (const [start, end] of windows) {
     let offset = 0;
     for (;;) {
       const url =
@@ -70,6 +73,13 @@ async function fetchAllReservations(token: string): Promise<HostexReservation[]>
     }
   }
   return [...byCode.values()];
+}
+
+// 30-day lookback (catches a stay already in progress whose checkout is
+// still ahead) through 400 days forward (comfortably covers however far a
+// guest navigates the calendar).
+async function fetchAllReservations(token: string): Promise<HostexReservation[]> {
+  return fetchReservationsForWindows(token, buildDateWindows(30, 400));
 }
 
 // Every reservation Hostex holds for this property, across every channel
@@ -232,4 +242,64 @@ export async function cancelHostexReservation(reservationCode: string): Promise<
     headers: hostexHeaders(HOSTEX_ACCESS_TOKEN),
   });
   return res.ok;
+}
+
+// ---- Monthly performance history (all channels, full account history) -----
+// Unlike getMonthlyAnalytics (site-only bookings from our own D1 ledger),
+// this reflects the property's real occupancy across every channel Hostex
+// manages — Airbnb, Booking.com, and direct — for the admin history page.
+
+export type MonthlyHistoryRow = {
+  month: string;
+  bookings: number;
+  nights: number;
+  revenueSen: number;
+};
+
+function nightsBetween(checkIn: string, checkOut: string): number {
+  const inMs = new Date(`${checkIn}T00:00:00Z`).getTime();
+  const outMs = new Date(`${checkOut}T00:00:00Z`).getTime();
+  return Math.round((outMs - inMs) / 86_400_000);
+}
+
+// Each reservation is bucketed entirely under its check-in month (no
+// splitting a stay across two months), same simplification the site's own
+// ledger analytics already use. Only "accepted" reservations count as a
+// real, completed booking.
+function aggregateMonthlyHistory(reservations: HostexReservation[]): MonthlyHistoryRow[] {
+  const byMonth = new Map<string, MonthlyHistoryRow>();
+  for (const r of reservations) {
+    if (r.status !== "accepted") continue;
+    const month = r.check_in_date.slice(0, 7);
+    const entry = byMonth.get(month) ?? { month, bookings: 0, nights: 0, revenueSen: 0 };
+    entry.bookings += 1;
+    entry.nights += nightsBetween(r.check_in_date, r.check_out_date);
+    entry.revenueSen += Math.round((r.payment?.received_amount ?? 0) * 100);
+    byMonth.set(month, entry);
+  }
+  return [...byMonth.values()];
+}
+
+export const HISTORY_BACKFILL_DAYS_BACK = 4 * 365;
+export const HISTORY_LIVE_WINDOW_DAYS_BACK = 45;
+export const HISTORY_DAYS_FORWARD = 60;
+
+export type HostexHistoryFetch =
+  { ok: true; rows: MonthlyHistoryRow[] } | { ok: false; error: string };
+
+export async function fetchHostexMonthlyHistory(
+  daysBack: number,
+  daysForward: number,
+): Promise<HostexHistoryFetch> {
+  const { HOSTEX_ACCESS_TOKEN } = bindings();
+  if (!HOSTEX_ACCESS_TOKEN) return { ok: false, error: "hostex_not_configured" };
+  try {
+    const reservations = await fetchReservationsForWindows(
+      HOSTEX_ACCESS_TOKEN,
+      buildDateWindows(daysBack, daysForward),
+    );
+    return { ok: true, rows: aggregateMonthlyHistory(reservations) };
+  } catch {
+    return { ok: false, error: "hostex_history_fetch_failed" };
+  }
 }
