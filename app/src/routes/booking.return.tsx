@@ -65,17 +65,27 @@ function BookingReturnPage() {
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-coral">RilekLU</p>
         <h1 className="mt-4 text-2xl font-semibold tracking-tighter text-cream">{copy.title}</h1>
         <p className="mt-4 text-sm leading-relaxed text-cream-dim">{copy.body}</p>
-        {copy.showWhatsApp && (
-          <div className="mt-6 flex justify-center">
-            <MessageHostButton
-              message={
-                reservationCode
-                  ? `Hi Pri! My booking reference is ${reservationCode}, can you help me confirm it?`
-                  : billCode
-                    ? `Hi Pri! My payment reference is ${billCode}, can you help me confirm my booking?`
-                    : "Hi Pri! I just tried to book RilekLU, can you help me confirm my dates?"
-              }
-            />
+        {(copy.showViewCalendar || copy.showWhatsApp) && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            {copy.showViewCalendar && (
+              <a
+                href="/#availability"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-coral px-7 py-3.5 font-mono text-sm font-medium uppercase tracking-wide text-ink transition-all duration-150 hover:bg-coral-deep hover:text-cream active:translate-y-[1px] active:scale-[0.98]"
+              >
+                View Calendar
+              </a>
+            )}
+            {copy.showWhatsApp && (
+              <MessageHostButton
+                message={
+                  reservationCode
+                    ? `Hi Pri! My booking reference is ${reservationCode}, can you help me confirm it?`
+                    : billCode
+                      ? `Hi Pri! My payment reference is ${billCode}, can you help me confirm my booking?`
+                      : "Hi Pri! I just tried to book RilekLU, can you help me confirm my dates?"
+                }
+              />
+            )}
           </div>
         )}
       </div>
@@ -83,40 +93,50 @@ function BookingReturnPage() {
   );
 }
 
-const COPY: Record<ViewState, { title: string; body: string; showWhatsApp: boolean }> = {
+const COPY: Record<
+  ViewState,
+  { title: string; body: string; showWhatsApp: boolean; showViewCalendar: boolean }
+> = {
   checking: {
     title: "Checking your payment…",
     body: "Give us a moment while we confirm this with the payment gateway.",
     showWhatsApp: false,
+    showViewCalendar: false,
   },
   confirmed: {
     title: "You're booked!",
     body: "Payment received and your dates are locked in. Pri will reach out on WhatsApp with your check-in details.",
     showWhatsApp: true,
+    showViewCalendar: false,
   },
   paid: {
     title: "Payment received",
     body: "We've got your payment and we're finishing up your reservation. If you don't hear from Pri shortly, message her directly with your reference below.",
     showWhatsApp: true,
+    showViewCalendar: false,
   },
   pending_payment: {
     title: "Payment still processing",
     body: "Your bank or payment gateway hasn't confirmed this yet. This page will update once it does — no need to pay again.",
     showWhatsApp: true,
+    showViewCalendar: false,
   },
   failed: {
     title: "Payment didn't go through",
     body: "Nothing was charged. You can try again from the availability calendar, or message Pri directly to sort out your dates.",
     showWhatsApp: true,
+    showViewCalendar: true,
   },
   not_found: {
     title: "We couldn't find that booking",
     body: "Something went wrong linking back to your booking attempt. Message Pri directly and she'll help sort it out.",
     showWhatsApp: true,
+    showViewCalendar: true,
   },
   cancelled: {
     title: "This booking was cancelled",
     body: "This reservation is no longer active. Message Pri if you'd like to book new dates.",
     showWhatsApp: true,
+    showViewCalendar: true,
   },
 };
