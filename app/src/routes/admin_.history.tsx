@@ -79,6 +79,20 @@ function AdminHistoryPage() {
 
   const byMonth = useMemo(() => new Map(rows.map((r) => [r.month, r])), [rows]);
   const years = useMemo(() => [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort(), [rows]);
+  const [excludedYears, setExcludedYears] = useState<Set<string>>(new Set());
+  const activeYears = useMemo(
+    () => years.filter((y) => !excludedYears.has(y)),
+    [years, excludedYears],
+  );
+
+  function toggleYear(year: string) {
+    setExcludedYears((prev) => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year);
+      else next.add(year);
+      return next;
+    });
+  }
 
   function valueFor(year: string, monthIdx: number): number {
     const row = byMonth.get(`${year}-${String(monthIdx + 1).padStart(2, "0")}`);
@@ -95,12 +109,12 @@ function AdminHistoryPage() {
   const maxTotal = useMemo(() => {
     let max = 0;
     for (let m = 0; m < 12; m++) {
-      const total = years.reduce((sum, y) => sum + valueFor(y, m), 0);
+      const total = activeYears.reduce((sum, y) => sum + valueFor(y, m), 0);
       if (total > max) max = total;
     }
     return max || 1;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [years, byMonth, metric]);
+  }, [activeYears, byMonth, metric]);
 
   if (!authed) {
     return (
@@ -142,11 +156,11 @@ function AdminHistoryPage() {
           <div>
             <a
               href="/admin"
-              className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
+              className="inline-block rounded-full border border-cream/20 px-4 py-2 font-mono text-xs uppercase tracking-wide text-cream-dim transition-colors hover:border-coral/60 hover:text-cream"
             >
               &larr; Back to Admin
             </a>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tighter text-cream">
+            <h1 className="mt-4 text-2xl font-semibold tracking-tighter text-cream">
               Historical Performance
             </h1>
           </div>
@@ -154,7 +168,7 @@ function AdminHistoryPage() {
             type="button"
             onClick={() => void load(password)}
             disabled={loading}
-            className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream disabled:opacity-50"
+            className="rounded-full border border-cream/20 px-4 py-2 font-mono text-xs uppercase tracking-wide text-cream-dim transition-colors hover:border-coral/60 hover:text-cream disabled:opacity-50"
           >
             {loading ? "Refreshing…" : "Refresh"}
           </button>
@@ -167,14 +181,18 @@ function AdminHistoryPage() {
         </p>
         {error && <p className="mt-3 text-sm text-coral">{error}</p>}
 
-        <div className="mt-8 flex gap-2">
+        <p className="mt-8 font-mono text-[11px] uppercase tracking-wide text-cream-dim">Metric</p>
+        <div className="mt-2 flex gap-2">
           {METRICS.map((m) => (
             <button
               key={m.key}
               type="button"
+              aria-pressed={metric === m.key}
               onClick={() => setMetric(m.key)}
-              className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wide transition-colors ${
-                metric === m.key ? "bg-coral text-ink" : "bg-ink-2 text-cream-dim hover:text-cream"
+              className={`rounded-full border px-4 py-2 font-mono text-xs uppercase tracking-wide transition-colors ${
+                metric === m.key
+                  ? "border-coral bg-coral text-ink"
+                  : "border-cream/20 bg-transparent text-cream-dim hover:border-cream/40 hover:text-cream"
               }`}
             >
               {m.label}
@@ -183,17 +201,37 @@ function AdminHistoryPage() {
         </div>
 
         {years.length > 0 && (
-          <div className="mt-6 flex flex-wrap gap-4">
-            {years.map((y, i) => (
-              <span key={y} className="flex items-center gap-2 font-mono text-xs text-cream-dim">
-                <span
-                  className="h-3 w-3 rounded-sm"
-                  style={{ backgroundColor: YEAR_COLORS[i % YEAR_COLORS.length] }}
-                />
-                {y}
-              </span>
-            ))}
-          </div>
+          <>
+            <p className="mt-6 font-mono text-[11px] uppercase tracking-wide text-cream-dim">
+              Years shown &mdash; click to toggle
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {years.map((y, i) => {
+                const active = !excludedYears.has(y);
+                const color = YEAR_COLORS[i % YEAR_COLORS.length];
+                return (
+                  <button
+                    key={y}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => toggleYear(y)}
+                    className="flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-xs transition-colors"
+                    style={
+                      active
+                        ? { backgroundColor: color, borderColor: color, color: "#0f2227" }
+                        : { borderColor: "rgba(244,238,226,0.2)", color: "#cfc6b4" }
+                    }
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: active ? "currentColor" : color }}
+                    />
+                    {y}
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
 
         <div className="mt-4 overflow-x-auto rounded-2xl border border-cream/10 bg-ink-2 p-6">
@@ -201,10 +239,14 @@ function AdminHistoryPage() {
             <p className="py-16 text-center text-sm text-cream-dim">
               {loading ? "Loading…" : "No accepted reservations found yet."}
             </p>
+          ) : activeYears.length === 0 ? (
+            <p className="py-16 text-center text-sm text-cream-dim">
+              No years selected — click a year above to show it.
+            </p>
           ) : (
             <div className="flex min-w-[720px] items-end gap-3">
               {MONTH_LABELS.map((label, monthIdx) => {
-                const total = years.reduce((sum, y) => sum + valueFor(y, monthIdx), 0);
+                const total = activeYears.reduce((sum, y) => sum + valueFor(y, monthIdx), 0);
                 return (
                   <div key={label} className="flex flex-1 flex-col items-center gap-2">
                     <span className="font-mono text-[11px] text-cream">
@@ -215,6 +257,7 @@ function AdminHistoryPage() {
                       style={{ height: CHART_HEIGHT }}
                     >
                       {years.map((y, i) => {
+                        if (excludedYears.has(y)) return null;
                         const v = valueFor(y, monthIdx);
                         if (v <= 0) return null;
                         return (

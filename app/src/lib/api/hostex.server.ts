@@ -282,7 +282,11 @@ function aggregateMonthlyHistory(reservations: HostexReservation[]): MonthlyHist
 
 export const HISTORY_BACKFILL_DAYS_BACK = 4 * 365;
 export const HISTORY_LIVE_WINDOW_DAYS_BACK = 45;
-export const HISTORY_DAYS_FORWARD = 60;
+// A guest can book months (occasionally over a year) ahead of check-in, so
+// the live refresh has to look that far forward too — otherwise a brand
+// new reservation for a distant check-in date would never show up until
+// its month happened to fall inside a narrower window.
+export const HISTORY_DAYS_FORWARD = 730;
 
 export type HostexHistoryFetch =
   { ok: true; rows: MonthlyHistoryRow[] } | { ok: false; error: string };

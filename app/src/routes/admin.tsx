@@ -125,17 +125,17 @@ function AdminPage() {
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tighter text-cream">RilekLU Admin</h1>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
             <a
               href="/admin/history"
-              className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
+              className="rounded-full border border-cream/20 px-4 py-2 font-mono text-xs uppercase tracking-wide text-cream-dim transition-colors hover:border-coral/60 hover:text-cream"
             >
               Historical Performance &rarr;
             </a>
             <button
               type="button"
               onClick={() => void loadAll(password)}
-              className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
+              className="rounded-full border border-cream/20 px-4 py-2 font-mono text-xs uppercase tracking-wide text-cream-dim transition-colors hover:border-coral/60 hover:text-cream"
             >
               Refresh
             </button>
@@ -217,7 +217,7 @@ function AdminPage() {
                       type="button"
                       onClick={() => void handleDelete(b.order_id)}
                       disabled={deletingId === b.order_id}
-                      className="font-mono text-xs uppercase tracking-wide text-coral hover:text-coral-deep disabled:opacity-50"
+                      className="rounded-full border border-coral/50 bg-coral/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-coral transition-colors hover:bg-coral hover:text-ink disabled:opacity-50"
                     >
                       {deletingId === b.order_id ? "Deleting…" : "Delete"}
                     </button>
