@@ -1,20 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { SITE_URL } from "../site-config";
-import {
-  claimBookingForFinalization,
-  getBookingByOrderId,
-  insertBooking,
-  markBookingConfirmed,
-  type BookingStatus,
-} from "../db.server";
-import {
-  createHostexReservation,
-  getHostexBusyRanges,
-  getHostexLivePricing,
-} from "./hostex.server";
+import type { BookingStatus } from "../db.server";
 import { quotePrice } from "./pricing";
-import { createToyyibPayBill, getToyyibPayBillStatus } from "./toyyibpay.server";
+import type { FinalizeResult } from "./booking.server";
+
+// NOTE: every server-only dependency below (Hostex, ToyyibPay, D1) is
+// imported dynamically INSIDE each handler, never at the top of this file.
+// This file is reachable from client-rendered routes (BookingPanel.tsx,
+// booking.return.tsx import these createServerFn exports), and a top-level
+// `.server.ts` import here would leak into the client bundle — the handler
+// body itself is what TanStack Start's compiler strips for the client
+// build, so a dynamic import scoped inside it is what actually stays
+// server-only. See booking.server.ts for the reasoning in full.
 
 export type PricingResult = {
   configured: boolean;
@@ -29,6 +27,7 @@ export type PricingResult = {
 // while the guest picks dates, with no per-keystroke server round-trip.
 export const getPricing = createServerFn({ method: "GET" }).handler(
   async (): Promise<PricingResult> => {
+    const { getHostexLivePricing } = await import("./hostex.server");
     const rates = await getHostexLivePricing();
     return {
       configured: rates.configured && rates.weekdayRate > 0,
@@ -75,6 +74,10 @@ export const createBookingBill = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data }): Promise<CreateBookingBillResult> => {
+    const { getHostexLivePricing, getHostexBusyRanges } = await import("./hostex.server");
+    const { createToyyibPayBill } = await import("./toyyibpay.server");
+    const { insertBooking } = await import("../db.server");
+
     const checkIn = new Date(`${data.checkInDate}T00:00:00Z`);
     const checkOut = new Date(`${data.checkOutDate}T00:00:00Z`);
     if (!(checkOut > checkIn)) return { ok: false, error: "invalid_range" };
@@ -124,55 +127,20 @@ export const createBookingBill = createServerFn({ method: "POST" })
     return { ok: true, paymentUrl: bill.paymentUrl };
   });
 
-export type FinalizeResult = {
+export type CheckBookingStatusResult = {
   status: BookingStatus | "not_found";
   reservationCode: string | null;
+  billStatus: string;
 };
-
-// Shared by both confirmation paths: the ToyyibPay server-to-server
-// callback, and the guest's own return-page visit reconciling against
-// ToyyibPay directly (ToyyibPay does not retry a failed callback on its
-// own, so the return page is a real safety net, not just a status screen).
-// `claimBookingForFinalization` guarantees only ONE of the two paths ever
-// actually calls Hostex for a given order.
-export async function finalizeBooking(orderId: string): Promise<FinalizeResult> {
-  const existing = await getBookingByOrderId(orderId);
-  if (!existing) return { status: "not_found", reservationCode: null };
-  if (existing.status === "confirmed") {
-    return { status: "confirmed", reservationCode: existing.hostex_reservation_code };
-  }
-
-  const { claimed, booking } = await claimBookingForFinalization(orderId);
-  if (!booking) return { status: "not_found", reservationCode: null };
-  if (!claimed) return { status: booking.status, reservationCode: booking.hostex_reservation_code };
-
-  const result = await createHostexReservation({
-    checkInDate: booking.check_in_date,
-    checkOutDate: booking.check_out_date,
-    guestName: booking.guest_name,
-    guestEmail: booking.guest_email,
-    guestPhone: booking.guest_phone,
-    totalAmountMyr: booking.total_amount / 100,
-    orderId: booking.order_id,
-  });
-
-  if (!result.ok) {
-    // Payment DID succeed — leave status "paid" (not "failed") so this reads
-    // as "needs a human to finish the Hostex side", never as a lost booking.
-    return { status: "paid", reservationCode: null };
-  }
-
-  await markBookingConfirmed(orderId, result.reservationCode);
-  return { status: "confirmed", reservationCode: result.reservationCode };
-}
-
-export type CheckBookingStatusResult = FinalizeResult & { billStatus: string };
 
 // Called from the return page: asks ToyyibPay directly whether this bill
 // was paid, then finalizes if so. Safe to call more than once.
 export const checkBookingStatus = createServerFn({ method: "GET" })
   .validator((input: { orderId: string }) => input)
   .handler(async ({ data }): Promise<CheckBookingStatusResult> => {
+    const { getBookingByOrderId } = await import("../db.server");
+    const { getToyyibPayBillStatus } = await import("./toyyibpay.server");
+
     const booking = await getBookingByOrderId(data.orderId);
     if (!booking) return { status: "not_found", reservationCode: null, billStatus: "unknown" };
     if (booking.status === "confirmed") {
@@ -191,6 +159,8 @@ export const checkBookingStatus = createServerFn({ method: "GET" })
       return { status: booking.status, reservationCode: null, billStatus };
     }
 
+    const { finalizeBooking }: { finalizeBooking: (orderId: string) => Promise<FinalizeResult> } =
+      await import("./booking.server");
     const result = await finalizeBooking(data.orderId);
     return { ...result, billStatus };
   });

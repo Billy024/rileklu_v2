@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { finalizeBooking } from "../../lib/api/booking.functions";
+import { finalizeBooking } from "../../lib/api/booking.server";
 import { markBookingFailed } from "../../lib/db.server";
 
 // ToyyibPay's server-to-server callback (billCallbackUrl). Posted as
