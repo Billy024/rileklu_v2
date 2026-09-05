@@ -123,7 +123,7 @@ export function Availability() {
                 </div>
                 <div className="mt-1 grid grid-cols-7 gap-1">
                   {Array.from({ length: leading }).map((_, i) => (
-                    <span key={`blank-${i}`} />
+                    <span key={`blank-${i}`} aria-hidden className="aspect-square" />
                   ))}
                   {days.map((day) => {
                     const busy = isBusy(day);
@@ -159,7 +159,7 @@ export function Availability() {
                     );
                   })}
                   {Array.from({ length: trailing }).map((_, i) => (
-                    <span key={`trail-${i}`} />
+                    <span key={`trail-${i}`} aria-hidden className="aspect-square" />
                   ))}
                 </div>
               </div>
