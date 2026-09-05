@@ -14,7 +14,7 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BookingReturnRouteImport } from './routes/booking.return'
-import { Route as AdminHistoryRouteImport } from './routes/admin.history'
+import { Route as AdminHistoryRouteImport } from './routes/admin_.history'
 import { Route as ApiToyyibpayCallbackRouteImport } from './routes/api/toyyibpay-callback'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
