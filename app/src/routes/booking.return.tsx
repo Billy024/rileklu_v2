@@ -4,11 +4,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { checkBookingStatus, type CheckBookingStatusResult } from "../lib/api/booking.functions";
 import { MessageHostButton } from "../components/site/cta";
 
-type Search = { order_id?: string };
+// ToyyibPay's own params on this redirect: status_id, billcode, msg,
+// transaction_id. Read billcode, not order_id — order_id/billExternalReferenceNo
+// does not reliably survive this redirect in practice (confirmed live: a
+// real return hit came back with only status_id/billcode/msg/transaction_id),
+// while billcode is ToyyibPay's own bill identifier and is always present.
+type Search = { billcode?: string };
 
 export const Route = createFileRoute("/booking/return")({
   validateSearch: (search: Record<string, unknown>): Search => ({
-    order_id: typeof search.order_id === "string" ? search.order_id : undefined,
+    billcode: typeof search.billcode === "string" ? search.billcode : undefined,
   }),
   head: () => ({
     meta: [{ name: "robots", content: "noindex" }],
@@ -19,18 +24,22 @@ export const Route = createFileRoute("/booking/return")({
 type ViewState = "checking" | CheckBookingStatusResult["status"];
 
 function BookingReturnPage() {
-  const { order_id: orderId } = Route.useSearch();
+  const { billcode: billCode } = Route.useSearch();
   const [state, setState] = useState<ViewState>("checking");
+  const [reservationCode, setReservationCode] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!orderId) {
+    if (!billCode) {
       setState("not_found");
       return;
     }
     let cancelled = false;
-    checkBookingStatus({ data: { orderId } })
+    checkBookingStatus({ data: { billCode } })
       .then((result) => {
-        if (!cancelled) setState(result.status);
+        if (!cancelled) {
+          setState(result.status);
+          setReservationCode(result.reservationCode);
+        }
       })
       .catch(() => {
         if (!cancelled) setState("not_found");
@@ -38,7 +47,7 @@ function BookingReturnPage() {
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [billCode]);
 
   const copy = COPY[state];
 
@@ -52,9 +61,11 @@ function BookingReturnPage() {
           <div className="mt-6 flex justify-center">
             <MessageHostButton
               message={
-                orderId
-                  ? `Hi Pri! My booking reference is ${orderId}, can you help me confirm it?`
-                  : "Hi Pri! I just tried to book RilekLU, can you help me confirm my dates?"
+                reservationCode
+                  ? `Hi Pri! My booking reference is ${reservationCode}, can you help me confirm it?`
+                  : billCode
+                    ? `Hi Pri! My payment reference is ${billCode}, can you help me confirm my booking?`
+                    : "Hi Pri! I just tried to book RilekLU, can you help me confirm my dates?"
               }
             />
           </div>

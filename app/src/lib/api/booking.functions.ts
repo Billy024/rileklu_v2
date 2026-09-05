@@ -96,7 +96,12 @@ export const createBookingBill = createServerFn({ method: "POST" })
 
     const quote = quotePrice(checkIn, checkOut, rates);
     const orderId = generateOrderId();
-    const returnUrl = `${SITE_URL}/booking/return?order_id=${orderId}`;
+    // No query string of our own here: ToyyibPay's redirect back to this
+    // URL only reliably carries ITS OWN appended params (status_id,
+    // billcode, msg, transaction_id) — a query string we add ourselves
+    // does not survive (confirmed live), so the return page reads billcode
+    // instead of anything we'd try to pass through here.
+    const returnUrl = `${SITE_URL}/booking/return`;
     const callbackUrl = `${SITE_URL}/api/toyyibpay-callback`;
 
     const bill = await createToyyibPayBill({
@@ -135,13 +140,18 @@ export type CheckBookingStatusResult = {
 
 // Called from the return page: asks ToyyibPay directly whether this bill
 // was paid, then finalizes if so. Safe to call more than once.
+//
+// Looked up by billCode, not orderId: ToyyibPay's own billcode is the one
+// identifier confirmed to reliably survive its return-URL redirect (a live
+// test came back with only status_id/billcode/msg/transaction_id — no
+// order_id at all), so the return page never has an orderId to pass here.
 export const checkBookingStatus = createServerFn({ method: "GET" })
-  .validator((input: { orderId: string }) => input)
+  .validator((input: { billCode: string }) => input)
   .handler(async ({ data }): Promise<CheckBookingStatusResult> => {
-    const { getBookingByOrderId } = await import("../db.server");
+    const { getBookingByBillCode } = await import("../db.server");
     const { getToyyibPayBillStatus } = await import("./toyyibpay.server");
 
-    const booking = await getBookingByOrderId(data.orderId);
+    const booking = await getBookingByBillCode(data.billCode);
     if (!booking) return { status: "not_found", reservationCode: null, billStatus: "unknown" };
     if (booking.status === "confirmed") {
       return {
@@ -161,6 +171,6 @@ export const checkBookingStatus = createServerFn({ method: "GET" })
 
     const { finalizeBooking }: { finalizeBooking: (orderId: string) => Promise<FinalizeResult> } =
       await import("./booking.server");
-    const result = await finalizeBooking(data.orderId);
+    const result = await finalizeBooking(booking.order_id);
     return { ...result, billStatus };
   });

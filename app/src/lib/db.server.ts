@@ -68,6 +68,20 @@ export async function getBookingByOrderId(orderId: string): Promise<BookingRow |
   return row ?? null;
 }
 
+// ToyyibPay's own bill_code — NOT order_id — is the one identifier
+// guaranteed to survive both the browser return-URL redirect and the
+// server-to-server callback (order_id/billExternalReferenceNo does not
+// reliably come back on the browser redirect in practice), so this is the
+// primary lookup key both confirmation paths actually use.
+export async function getBookingByBillCode(billCode: string): Promise<BookingRow | null> {
+  const { DB } = bindings();
+  if (!DB) return null;
+  const row = await DB.prepare(`SELECT * FROM bookings WHERE bill_code = ?`)
+    .bind(billCode)
+    .first<BookingRow>();
+  return row ?? null;
+}
+
 // Atomically claims a booking for finalization: only the FIRST caller (the
 // ToyyibPay callback or the guest's own return-page visit, whichever gets
 // there first) sees claimed=true and should go on to call Hostex. The other
