@@ -33,6 +33,15 @@ export async function createToyyibPayBill(input: CreateBillInput): Promise<Creat
     billCallbackUrl: input.callbackUrl,
     billExternalReferenceNo: input.orderId,
     billPaymentChannel: "2", // FPX + card
+    // createBill rejects an empty billTo/billEmail/billPhone outright
+    // (confirmed live — contradicts ToyyibPay's own docs, which list these
+    // as optional), even though the guest overwrites them on ToyyibPay's
+    // own checkout page anyway. These are just placeholders to satisfy that
+    // validation; getToyyibPayTransaction reads back what the guest actually
+    // entered afterwards.
+    billTo: "Guest",
+    billEmail: "guest@rileklu.com",
+    billPhone: "0000000000",
   });
 
   const res = await fetch(`${TOYYIBPAY_BASE_URL}/index.php/api/createBill`, {
