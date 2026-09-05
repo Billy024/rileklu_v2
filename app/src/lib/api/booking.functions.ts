@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { SITE_URL } from "../site-config";
-import type { BookingStatus } from "../db.server";
 import { quotePrice } from "./pricing";
 import type { FinalizeResult } from "./booking.server";
 
@@ -13,6 +12,8 @@ import type { FinalizeResult } from "./booking.server";
 // body itself is what TanStack Start's compiler strips for the client
 // build, so a dynamic import scoped inside it is what actually stays
 // server-only. See booking.server.ts for the reasoning in full.
+
+export type { FinalizeResult } from "./booking.server";
 
 export type PricingResult = {
   configured: boolean;
@@ -53,23 +54,22 @@ function isDateOnly(value: unknown): value is string {
 export type CreateBookingBillInput = {
   checkInDate: string; // YYYY-MM-DD
   checkOutDate: string; // YYYY-MM-DD
-  guestName: string;
-  guestEmail: string;
-  guestPhone: string;
 };
 
 export type CreateBookingBillResult =
   { ok: true; paymentUrl: string } | { ok: false; error: string };
 
 // Re-validates everything server-side (never trusts client-sent dates or
-// amounts), writes a pending booking row, then opens a ToyyibPay bill for it.
+// amounts), writes a pending booking row, then opens a ToyyibPay bill for
+// it. No guest name/email/phone here: ToyyibPay's own checkout page is what
+// actually collects that (its hosted form doesn't reflect billTo/billEmail/
+// billPhone back into its fields anyway, confirmed live), and
+// finalizeBooking reads the guest's real answers back from ToyyibPay's
+// transaction record once payment completes.
 export const createBookingBill = createServerFn({ method: "POST" })
   .validator((input: CreateBookingBillInput) => {
     if (!isDateOnly(input.checkInDate) || !isDateOnly(input.checkOutDate)) {
       throw new Error("invalid_dates");
-    }
-    if (!input.guestName?.trim() || !input.guestEmail?.trim() || !input.guestPhone?.trim()) {
-      throw new Error("missing_guest_info");
     }
     return input;
   })
@@ -107,9 +107,6 @@ export const createBookingBill = createServerFn({ method: "POST" })
     const bill = await createToyyibPayBill({
       orderId,
       amountMyr: quote.totalAmount,
-      guestName: data.guestName.trim(),
-      guestEmail: data.guestEmail.trim(),
-      guestPhone: data.guestPhone.trim(),
       returnUrl,
       callbackUrl,
     });
@@ -120,9 +117,6 @@ export const createBookingBill = createServerFn({ method: "POST" })
       checkInDate: data.checkInDate,
       checkOutDate: data.checkOutDate,
       nights: quote.nights,
-      guestName: data.guestName.trim(),
-      guestEmail: data.guestEmail.trim(),
-      guestPhone: data.guestPhone.trim(),
       accommodationAmount: Math.round(quote.accommodationAmount * 100),
       cleaningFeeAmount: Math.round(quote.cleaningFee * 100),
       totalAmount: Math.round(quote.totalAmount * 100),
@@ -132,14 +126,9 @@ export const createBookingBill = createServerFn({ method: "POST" })
     return { ok: true, paymentUrl: bill.paymentUrl };
   });
 
-export type CheckBookingStatusResult = {
-  status: BookingStatus | "not_found";
-  reservationCode: string | null;
-  billStatus: string;
-};
-
-// Called from the return page: asks ToyyibPay directly whether this bill
-// was paid, then finalizes if so. Safe to call more than once.
+// Called from the return page: verifies payment with ToyyibPay and
+// finalizes (writing the Hostex reservation) if it went through. Safe to
+// call more than once — finalizeBooking is itself idempotent.
 //
 // Looked up by billCode, not orderId: ToyyibPay's own billcode is the one
 // identifier confirmed to reliably survive its return-URL redirect (a live
@@ -147,30 +136,11 @@ export type CheckBookingStatusResult = {
 // order_id at all), so the return page never has an orderId to pass here.
 export const checkBookingStatus = createServerFn({ method: "GET" })
   .validator((input: { billCode: string }) => input)
-  .handler(async ({ data }): Promise<CheckBookingStatusResult> => {
+  .handler(async ({ data }): Promise<FinalizeResult> => {
     const { getBookingByBillCode } = await import("../db.server");
-    const { getToyyibPayBillStatus } = await import("./toyyibpay.server");
-
     const booking = await getBookingByBillCode(data.billCode);
-    if (!booking) return { status: "not_found", reservationCode: null, billStatus: "unknown" };
-    if (booking.status === "confirmed") {
-      return {
-        status: "confirmed",
-        reservationCode: booking.hostex_reservation_code,
-        billStatus: "success",
-      };
-    }
-    if (!booking.bill_code) {
-      return { status: booking.status, reservationCode: null, billStatus: "unknown" };
-    }
+    if (!booking) return { status: "not_found", reservationCode: null };
 
-    const billStatus = await getToyyibPayBillStatus(booking.bill_code);
-    if (billStatus !== "success") {
-      return { status: booking.status, reservationCode: null, billStatus };
-    }
-
-    const { finalizeBooking }: { finalizeBooking: (orderId: string) => Promise<FinalizeResult> } =
-      await import("./booking.server");
-    const result = await finalizeBooking(booking.order_id);
-    return { ...result, billStatus };
+    const { finalizeBooking } = await import("./booking.server");
+    return finalizeBooking(booking.order_id);
   });

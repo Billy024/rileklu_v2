@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { checkBookingStatus, type CheckBookingStatusResult } from "../lib/api/booking.functions";
+import { checkBookingStatus, type FinalizeResult } from "../lib/api/booking.functions";
 import { MessageHostButton } from "../components/site/cta";
 
 // ToyyibPay's own params on this redirect: status_id, billcode, msg,
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/booking/return")({
   component: BookingReturnPage,
 });
 
-type ViewState = "checking" | CheckBookingStatusResult["status"];
+type ViewState = "checking" | FinalizeResult["status"];
 
 function BookingReturnPage() {
   const { billcode: billCode } = Route.useSearch();

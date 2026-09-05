@@ -25,15 +25,16 @@ export type NewBooking = {
   checkInDate: string;
   checkOutDate: string;
   nights: number;
-  guestName: string;
-  guestEmail: string;
-  guestPhone: string;
   accommodationAmount: number;
   cleaningFeeAmount: number;
   totalAmount: number;
   billCode: string;
 };
 
+// Guest identity isn't known yet at insert time — ToyyibPay's own checkout
+// form is what actually collects it (see toyyibpay.server.ts), so these
+// start blank and get filled in by updateBookingGuestInfo once payment
+// confirms and we can read back what the guest entered there.
 export async function insertBooking(row: NewBooking): Promise<void> {
   const { DB } = bindings();
   if (!DB) throw new Error("db_not_configured");
@@ -41,21 +42,32 @@ export async function insertBooking(row: NewBooking): Promise<void> {
     `INSERT INTO bookings
       (order_id, check_in_date, check_out_date, nights, guest_name, guest_email, guest_phone,
        accommodation_amount, cleaning_fee_amount, total_amount, bill_code, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment')`,
+     VALUES (?, ?, ?, ?, '', '', '', ?, ?, ?, ?, 'pending_payment')`,
   )
     .bind(
       row.orderId,
       row.checkInDate,
       row.checkOutDate,
       row.nights,
-      row.guestName,
-      row.guestEmail,
-      row.guestPhone,
       row.accommodationAmount,
       row.cleaningFeeAmount,
       row.totalAmount,
       row.billCode,
     )
+    .run();
+}
+
+export async function updateBookingGuestInfo(
+  orderId: string,
+  info: { guestName: string; guestEmail: string; guestPhone: string },
+): Promise<void> {
+  const { DB } = bindings();
+  if (!DB) return;
+  await DB.prepare(
+    `UPDATE bookings SET guest_name = ?, guest_email = ?, guest_phone = ?, updated_at = datetime('now')
+     WHERE order_id = ?`,
+  )
+    .bind(info.guestName, info.guestEmail, info.guestPhone, orderId)
     .run();
 }
 
