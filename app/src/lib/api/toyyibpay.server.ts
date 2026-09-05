@@ -24,7 +24,11 @@ export async function createToyyibPayBill(input: CreateBillInput): Promise<Creat
     billName: "RilekLU Booking",
     billDescription: `Stay ${input.orderId}`,
     billPriceSetting: "1", // fixed amount — guest can't edit it
-    billPayorInfo: "1",
+    // "0" = guest info is optional on ToyyibPay's own page, since we already
+    // collected and passed it via billTo/billEmail/billPhone below — "1"
+    // makes ToyyibPay force guests to fill it in again before they can even
+    // reach the bank/FPX selection step.
+    billPayorInfo: "0",
     billAmount: String(Math.round(input.amountMyr * 100)), // sen
     billReturnUrl: input.returnUrl,
     billCallbackUrl: input.callbackUrl,
