@@ -13,8 +13,14 @@ import {
 } from "date-fns";
 
 import { getAvailability } from "../../lib/api/availability.functions";
+import { BookingPanel } from "./BookingPanel";
 import { AskDatesButton } from "./cta";
 import { IconCalendar } from "./icons";
+
+// Every month grid is padded to a fixed 6 rows (42 cells) so the widget never
+// grows/shrinks between a 4-week and a 6-week month, which was shifting the
+// button row below it.
+const GRID_CELLS = 42;
 
 function monthGrid(monthStart: Date) {
   const start = startOfMonth(monthStart);
@@ -22,7 +28,8 @@ function monthGrid(monthStart: Date) {
   const days = eachDayOfInterval({ start, end });
   // Leading blanks so the 1st lands in the correct weekday column (Mon-first).
   const leading = (start.getDay() + 6) % 7;
-  return { days, leading };
+  const trailing = GRID_CELLS - leading - days.length;
+  return { days, leading, trailing };
 }
 
 export function Availability() {
@@ -34,7 +41,7 @@ export function Availability() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["airbnb-availability"],
+    queryKey: ["hostex-availability"],
     queryFn: () => getAvailability(),
     staleTime: 5 * 60 * 1000,
   });
@@ -81,9 +88,9 @@ export function Availability() {
           Pick your dates, ask in one tap.
         </h2>
         <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-cream-dim">
-          Greyed-out days are already booked, read straight from RilekLU&rsquo;s Airbnb calendar.
-          Pick a start and end date, then confirm the exact dates and payment with Pri over
-          WhatsApp, the fast, reliable way this stay has always been booked.
+          Greyed-out days are already booked, read straight from RilekLU&rsquo;s live booking
+          calendar. Pick a start and end date to see pricing and reserve instantly, or message Pri
+          over WhatsApp if you&rsquo;d rather confirm by hand.
         </p>
 
         {!isLoading && data && !data.configured && (
@@ -100,7 +107,7 @@ export function Availability() {
 
         <div className="mt-10 grid gap-8 md:grid-cols-2">
           {months.map((monthStart) => {
-            const { days, leading } = monthGrid(monthStart);
+            const { days, leading, trailing } = monthGrid(monthStart);
             return (
               <div key={monthStart.toISOString()} className="rounded-3xl bg-ink p-6">
                 <div className="flex items-center justify-between">
@@ -151,11 +158,16 @@ export function Availability() {
                       </button>
                     );
                   })}
+                  {Array.from({ length: trailing }).map((_, i) => (
+                    <span key={`trail-${i}`} />
+                  ))}
                 </div>
               </div>
             );
           })}
         </div>
+
+        {range.start && range.end && <BookingPanel checkIn={range.start} checkOut={range.end} />}
 
         <div className="mt-8 flex flex-wrap items-center gap-4">
           <AskDatesButton message={inquiryMessage} />

@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BookingReturnRouteImport } from './routes/booking.return'
+import { Route as ApiToyyibpayCallbackRouteImport } from './routes/api/toyyibpay-callback'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -28,35 +30,69 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BookingReturnRoute = BookingReturnRouteImport.update({
+  id: '/booking/return',
+  path: '/booking/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiToyyibpayCallbackRoute = ApiToyyibpayCallbackRouteImport.update({
+  id: '/api/toyyibpay-callback',
+  path: '/api/toyyibpay-callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
+  '/booking/return': typeof BookingReturnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
+  '/booking/return': typeof BookingReturnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
+  '/booking/return': typeof BookingReturnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/robots.txt' | '/sitemap.xml'
+  fullPaths:
+    | '/'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/api/toyyibpay-callback'
+    | '/booking/return'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/robots.txt' | '/sitemap.xml'
-  id: '__root__' | '/' | '/robots.txt' | '/sitemap.xml'
+  to:
+    | '/'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/api/toyyibpay-callback'
+    | '/booking/return'
+  id:
+    | '__root__'
+    | '/'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/api/toyyibpay-callback'
+    | '/booking/return'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiToyyibpayCallbackRoute: typeof ApiToyyibpayCallbackRoute
+  BookingReturnRoute: typeof BookingReturnRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +118,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/toyyibpay-callback': {
+      id: '/api/toyyibpay-callback'
+      path: '/api/toyyibpay-callback'
+      fullPath: '/api/toyyibpay-callback'
+      preLoaderRoute: typeof ApiToyyibpayCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/booking/return': {
+      id: '/booking/return'
+      path: '/booking/return'
+      fullPath: '/booking/return'
+      preLoaderRoute: typeof BookingReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +139,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiToyyibpayCallbackRoute: ApiToyyibpayCallbackRoute,
+  BookingReturnRoute: BookingReturnRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

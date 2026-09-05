@@ -55,6 +55,28 @@ export function AskDatesButton({ message }: { message: string }) {
   );
 }
 
+/** Booking panel — coral fill primary; disabled while dates are incomplete, swaps label while submitting. */
+export function ReserveNowButton({
+  onClick,
+  disabled,
+  loading,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-coral px-7 py-3.5 font-mono text-sm font-medium uppercase tracking-wide text-ink transition-all duration-150 hover:bg-coral-deep hover:text-cream active:translate-y-[1px] active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-cream-dim/20 disabled:text-cream-dim disabled:hover:bg-cream-dim/20 disabled:active:translate-y-0 disabled:active:scale-100"
+    >
+      {loading ? "Redirecting to payment…" : "Reserve Now"}
+    </button>
+  );
+}
+
 /** Footer — tap-to-call chip, one per number, phone glyph fills solid on tap. */
 export function CallChip({ label, tel }: { label: string; tel: string }) {
   return (

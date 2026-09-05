@@ -24,11 +24,13 @@ type AppEnv = {
   CONTAINER?: DurableObjectNamespace;
   HF_ENV?: string;
   APP_SLUG?: string;
-  // Set via website_secrets (Higgsfield) / the host's env vars (Replit): the
-  // host's private Airbnb calendar export URL (Airbnb host dashboard ->
-  // Calendar -> this listing -> Availability settings -> Connect calendars ->
-  // Export calendar). Feature degrades gracefully when unset.
-  AIRBNB_ICAL_URL?: string;
+  // Hostex Open API access token (Host Portal -> OpenAPI Settings -> Add new).
+  // Powers live availability, live pricing, and direct-reservation creation.
+  HOSTEX_ACCESS_TOKEN?: string;
+  // ToyyibPay user secret key (dev.toyyibpay.com sandbox, or the production
+  // key once live). Never sent to the client — used server-side only to
+  // create/verify bills.
+  TOYYIBPAY_SECRET_KEY?: string;
 };
 
 export function bindings(): AppEnv {
