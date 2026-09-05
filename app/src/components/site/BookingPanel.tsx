@@ -85,10 +85,10 @@ export function BookingPanel({ checkIn, checkOut }: { checkIn: Date; checkOut: D
   }
 
   return (
-    <div className="mt-6 rounded-3xl bg-ink p-6 md:p-8">
+    <div className="rounded-3xl bg-ink p-6 md:p-8">
       <p className="font-mono text-xs uppercase tracking-[0.3em] text-coral">Your Stay</p>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-4 grid gap-4">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-wide text-cream-dim">Check-in</p>
           <p className="mt-1 text-lg text-cream">{format(checkIn, "EEE, d MMM yyyy")} · 3:00 PM</p>

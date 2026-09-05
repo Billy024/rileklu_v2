@@ -16,9 +16,10 @@ import { getAvailability } from "../../lib/api/availability.functions";
 import { BookingPanel } from "./BookingPanel";
 import { IconCalendar } from "./icons";
 
-// Every month grid is padded to a fixed 6 rows (42 cells) so the widget never
+// The month grid is padded to a fixed 6 rows (42 cells) so the widget never
 // grows/shrinks between a 4-week and a 6-week month, which was shifting the
-// button row below it.
+// controls below it. Filler cells get the same aspect-square sizing as real
+// day buttons so a row made entirely of filler doesn't collapse either.
 const GRID_CELLS = 42;
 
 function monthGrid(monthStart: Date) {
@@ -71,7 +72,8 @@ export function Availability() {
     });
   }
 
-  const months = [cursor, addMonths(cursor, 1)];
+  const { days, leading, trailing } = monthGrid(cursor);
+  const hasRange = Boolean(range.start && range.end);
 
   return (
     <section id="availability" className="bg-ink-2 py-24 md:py-32">
@@ -96,96 +98,103 @@ export function Availability() {
           </p>
         )}
 
-        <div className="mt-10 grid gap-8 md:grid-cols-2">
-          {months.map((monthStart) => {
-            const { days, leading, trailing } = monthGrid(monthStart);
-            return (
-              <div key={monthStart.toISOString()} className="rounded-3xl bg-ink p-6">
-                <div className="flex items-center justify-between">
-                  <p className="font-mono text-sm uppercase tracking-[0.2em] text-cream">
-                    {format(monthStart, "MMMM yyyy")}
-                  </p>
-                  <IconCalendar className="h-5 w-5 text-coral" />
-                </div>
-                <div className="mt-4 grid grid-cols-7 gap-1 text-center font-mono text-[10px] uppercase text-cream-dim">
-                  {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-                    <span key={d}>{d}</span>
-                  ))}
-                </div>
-                <div className="mt-1 grid grid-cols-7 gap-1">
-                  {Array.from({ length: leading }).map((_, i) => (
-                    <span key={`blank-${i}`} aria-hidden className="aspect-square" />
-                  ))}
-                  {days.map((day) => {
-                    const busy = isBusy(day);
-                    const past = isBefore(day, today);
-                    const selected =
-                      (range.start && isSameDay(day, range.start)) ||
-                      (range.end && isSameDay(day, range.end));
-                    const inRange =
-                      range.start &&
-                      range.end &&
-                      isWithinInterval(day, { start: range.start, end: range.end });
-                    return (
-                      <button
-                        key={day.toISOString()}
-                        type="button"
-                        disabled={busy || past}
-                        onClick={() => handlePick(day)}
-                        aria-pressed={Boolean(selected)}
-                        aria-label={format(day, "d MMMM yyyy") + (busy ? ", booked" : "")}
-                        className={[
-                          "aspect-square rounded-lg font-mono text-xs transition-colors",
-                          past ? "text-cream-dim/20" : "",
-                          busy && !past
-                            ? "cursor-not-allowed bg-ink-2 text-cream-dim/40 line-through"
-                            : "",
-                          !busy && !past ? "text-cream-dim hover:bg-ink-2 hover:text-cream" : "",
-                          selected ? "bg-coral text-ink hover:bg-coral" : "",
-                          inRange && !selected ? "bg-coral/25 text-cream" : "",
-                        ].join(" ")}
-                      >
-                        {format(day, "d")}
-                      </button>
-                    );
-                  })}
-                  {Array.from({ length: trailing }).map((_, i) => (
-                    <span key={`trail-${i}`} aria-hidden className="aspect-square" />
-                  ))}
-                </div>
+        <div className="mt-10 grid gap-8 lg:grid-cols-2 lg:items-start">
+          <div>
+            <div className="rounded-3xl bg-ink p-6">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-sm uppercase tracking-[0.2em] text-cream">
+                  {format(cursor, "MMMM yyyy")}
+                </p>
+                <IconCalendar className="h-5 w-5 text-coral" />
               </div>
-            );
-          })}
-        </div>
+              <div className="mt-4 grid grid-cols-7 gap-1 text-center font-mono text-[10px] uppercase text-cream-dim">
+                {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
+                  <span key={d}>{d}</span>
+                ))}
+              </div>
+              <div className="mt-1 grid grid-cols-7 gap-1">
+                {Array.from({ length: leading }).map((_, i) => (
+                  <span key={`blank-${i}`} aria-hidden className="aspect-square" />
+                ))}
+                {days.map((day) => {
+                  const busy = isBusy(day);
+                  const past = isBefore(day, today);
+                  const selected =
+                    (range.start && isSameDay(day, range.start)) ||
+                    (range.end && isSameDay(day, range.end));
+                  const inRange =
+                    range.start &&
+                    range.end &&
+                    isWithinInterval(day, { start: range.start, end: range.end });
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      type="button"
+                      disabled={busy || past}
+                      onClick={() => handlePick(day)}
+                      aria-pressed={Boolean(selected)}
+                      aria-label={format(day, "d MMMM yyyy") + (busy ? ", booked" : "")}
+                      className={[
+                        "aspect-square rounded-lg font-mono text-xs transition-colors",
+                        past ? "text-cream-dim/20" : "",
+                        busy && !past
+                          ? "cursor-not-allowed bg-ink-2 text-cream-dim/40 line-through"
+                          : "",
+                        !busy && !past ? "text-cream-dim hover:bg-ink-2 hover:text-cream" : "",
+                        selected ? "bg-coral text-ink hover:bg-coral" : "",
+                        inRange && !selected ? "bg-coral/25 text-cream" : "",
+                      ].join(" ")}
+                    >
+                      {format(day, "d")}
+                    </button>
+                  );
+                })}
+                {Array.from({ length: trailing }).map((_, i) => (
+                  <span key={`trail-${i}`} aria-hidden className="aspect-square" />
+                ))}
+              </div>
+            </div>
 
-        {range.start && range.end && <BookingPanel checkIn={range.start} checkOut={range.end} />}
+            <div className="mt-6 flex flex-wrap items-center gap-4">
+              {range.start && (
+                <button
+                  type="button"
+                  onClick={() => setRange({ start: null, end: null })}
+                  className="font-mono text-xs uppercase tracking-wide text-cream-dim underline-offset-4 hover:text-cream hover:underline"
+                >
+                  Clear dates
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setCursor((c) => addMonths(c, -1))}
+                className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
+                aria-label="Previous month"
+              >
+                &larr; Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => setCursor((c) => addMonths(c, 1))}
+                className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
+                aria-label="Next month"
+              >
+                Next &rarr;
+              </button>
+            </div>
+          </div>
 
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          {range.start && (
-            <button
-              type="button"
-              onClick={() => setRange({ start: null, end: null })}
-              className="font-mono text-xs uppercase tracking-wide text-cream-dim underline-offset-4 hover:text-cream hover:underline"
-            >
-              Clear dates
-            </button>
+          {hasRange && range.start && range.end ? (
+            <BookingPanel checkIn={range.start} checkOut={range.end} />
+          ) : (
+            <div className="rounded-3xl bg-ink p-6 md:p-8">
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-coral">Your Stay</p>
+              <p className="mt-4 max-w-[38ch] text-sm leading-relaxed text-cream-dim">
+                Pick a check-in and check-out date on the calendar to see live pricing and reserve
+                instantly.
+              </p>
+            </div>
           )}
-          <button
-            type="button"
-            onClick={() => setCursor((c) => addMonths(c, -1))}
-            className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
-            aria-label="Previous months"
-          >
-            &larr; Prev
-          </button>
-          <button
-            type="button"
-            onClick={() => setCursor((c) => addMonths(c, 1))}
-            className="font-mono text-xs uppercase tracking-wide text-cream-dim hover:text-cream"
-            aria-label="Next months"
-          >
-            Next &rarr;
-          </button>
         </div>
       </div>
     </section>
