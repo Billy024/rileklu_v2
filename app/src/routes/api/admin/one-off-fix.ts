@@ -9,7 +9,7 @@ import { markBookingCancelled } from "../../../lib/db.server";
 export const Route = createFileRoute("/api/admin/one-off-fix")({
   server: {
     handlers: {
-      GET: async () => {
+      POST: async () => {
         await markBookingCancelled("RLK81A3EE0925C348F2B59F44B7");
         return new Response("done", { status: 200 });
       },
