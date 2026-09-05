@@ -14,7 +14,6 @@ import {
 
 import { getAvailability } from "../../lib/api/availability.functions";
 import { BookingPanel } from "./BookingPanel";
-import { AskDatesButton } from "./cta";
 import { IconCalendar } from "./icons";
 
 // Every month grid is padded to a fixed 6 rows (42 cells) so the widget never
@@ -74,34 +73,26 @@ export function Availability() {
 
   const months = [cursor, addMonths(cursor, 1)];
 
-  const inquiryMessage = range.start
-    ? `Hi Pri! We'd like to check RilekLU for ${format(range.start, "d MMM yyyy")}${
-        range.end ? ` to ${format(range.end, "d MMM yyyy")}` : ""
-      }. Is it available?`
-    : "Hi Pri! We're checking RilekLU's availability, could you help us with dates?";
-
   return (
     <section id="availability" className="bg-ink-2 py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-coral">Availability</p>
         <h2 className="mt-4 max-w-xl text-3xl font-semibold tracking-tighter text-cream md:text-5xl">
-          Pick your dates, ask in one tap.
+          Pick your dates, reserve in one tap.
         </h2>
         <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-cream-dim">
           Greyed-out days are already booked, read straight from RilekLU&rsquo;s live booking
-          calendar. Pick a start and end date to see pricing and reserve instantly, or message Pri
-          over WhatsApp if you&rsquo;d rather confirm by hand.
+          calendar. Pick a start and end date to see pricing and reserve instantly.
         </p>
 
         {!isLoading && data && !data.configured && (
           <p className="mt-6 max-w-[60ch] rounded-2xl bg-ink px-5 py-4 font-mono text-xs uppercase tracking-wide text-cream-dim">
-            Live calendar sync isn&rsquo;t connected yet on this preview. Message Pri directly and
-            dates will be confirmed by hand.
+            Live calendar sync isn&rsquo;t connected yet on this preview. Please check back shortly.
           </p>
         )}
         {!isLoading && data?.error && (
           <p className="mt-6 max-w-[60ch] rounded-2xl bg-ink px-5 py-4 font-mono text-xs uppercase tracking-wide text-cream-dim">
-            Couldn&rsquo;t reach the calendar right now. Message Pri directly to confirm dates.
+            Couldn&rsquo;t reach the calendar right now. Please try refreshing the page.
           </p>
         )}
 
@@ -170,7 +161,6 @@ export function Availability() {
         {range.start && range.end && <BookingPanel checkIn={range.start} checkOut={range.end} />}
 
         <div className="mt-8 flex flex-wrap items-center gap-4">
-          <AskDatesButton message={inquiryMessage} />
           {range.start && (
             <button
               type="button"

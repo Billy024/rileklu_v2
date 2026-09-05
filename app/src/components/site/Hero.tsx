@@ -1,5 +1,5 @@
 import { useParallax } from "../../lib/use-parallax";
-import { CheckDatesButton, MessageHostButton } from "./cta";
+import { CheckDatesButton } from "./cta";
 
 // Hero — the Tier-1 mechanic for this non-animated build: a full-bleed
 // autoplay/muted/looping cinematic video plus 3 transform-only parallax
@@ -49,8 +49,7 @@ export function Hero() {
             balconies, built for weekends with your people.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <CheckDatesButton href="#availability">Check Dates</CheckDatesButton>
-            <MessageHostButton message="Hi Pri! We're checking out RilekLU, is it available soon?" />
+            <CheckDatesButton href="#availability">Check Calendar</CheckDatesButton>
           </div>
         </div>
       </div>

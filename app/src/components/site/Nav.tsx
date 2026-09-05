@@ -1,4 +1,4 @@
-import { CallChip } from "./cta";
+import { CheckDatesButton } from "./cta";
 
 export function Nav() {
   return (
@@ -26,7 +26,7 @@ export function Nav() {
           </a>
         </nav>
         <div className="hidden sm:block">
-          <CallChip label="+60 13-618 0059" tel="+60136180059" />
+          <CheckDatesButton href="#availability">Check Calendar</CheckDatesButton>
         </div>
       </div>
     </header>

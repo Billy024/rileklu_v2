@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { IconArrowRight, IconChat, IconPhone, IconPin } from "./icons";
+import { IconArrowRight, IconPhone, IconPin } from "./icons";
 
 // Bespoke-chrome CTA inventory (design-brief.md "CTA inventory"): every call
 // to action is its OWN component with its own interaction identity. All
@@ -36,21 +36,6 @@ export function MessageHostButton({ message }: { message: string }) {
     >
       Message Pri
       <IconArrowRight className="h-4 w-4 transition-transform duration-200 ease-out group-hover:translate-x-1" />
-    </a>
-  );
-}
-
-/** Availability — coral fill with a chat glyph, for the WhatsApp date inquiry. */
-export function AskDatesButton({ message }: { message: string }) {
-  return (
-    <a
-      href={buildWhatsAppHref(message)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center justify-center gap-2 rounded-full bg-coral px-6 py-3 font-mono text-sm font-medium uppercase tracking-wide text-ink transition-all duration-150 hover:bg-coral-deep hover:text-cream active:scale-[0.98]"
-    >
-      <IconChat className="h-4 w-4" />
-      Ask About These Dates
     </a>
   );
 }
