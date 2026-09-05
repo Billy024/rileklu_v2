@@ -1,6 +1,6 @@
 import { bindings } from "./bindings.server";
 
-export type BookingStatus = "pending_payment" | "paid" | "confirmed" | "failed";
+export type BookingStatus = "pending_payment" | "paid" | "confirmed" | "failed" | "cancelled";
 
 export type BookingRow = {
   order_id: string;
@@ -122,6 +122,19 @@ export async function markBookingFailed(orderId: string): Promise<void> {
   if (!DB) return;
   await DB.prepare(
     `UPDATE bookings SET status = 'failed', updated_at = datetime('now') WHERE order_id = ?`,
+  )
+    .bind(orderId)
+    .run();
+}
+
+// Used when a confirmed reservation is later cancelled directly in Hostex
+// (e.g. a test booking) — keeps our own ledger honest without implying
+// something went wrong technically, which "failed" would.
+export async function markBookingCancelled(orderId: string): Promise<void> {
+  const { DB } = bindings();
+  if (!DB) return;
+  await DB.prepare(
+    `UPDATE bookings SET status = 'cancelled', updated_at = datetime('now') WHERE order_id = ?`,
   )
     .bind(orderId)
     .run();

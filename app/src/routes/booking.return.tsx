@@ -106,4 +106,9 @@ const COPY: Record<ViewState, { title: string; body: string; showWhatsApp: boole
     body: "Something went wrong linking back to your booking attempt. Message Pri directly and she'll help sort it out.",
     showWhatsApp: true,
   },
+  cancelled: {
+    title: "This booking was cancelled",
+    body: "This reservation is no longer active. Message Pri if you'd like to book new dates.",
+    showWhatsApp: true,
+  },
 };

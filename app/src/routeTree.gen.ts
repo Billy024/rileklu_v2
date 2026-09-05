@@ -14,6 +14,7 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookingReturnRouteImport } from './routes/booking.return'
 import { Route as ApiToyyibpayCallbackRouteImport } from './routes/api/toyyibpay-callback'
+import { Route as ApiAdminOneOffFixRouteImport } from './routes/api/admin/one-off-fix'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -40,6 +41,11 @@ const ApiToyyibpayCallbackRoute = ApiToyyibpayCallbackRouteImport.update({
   path: '/api/toyyibpay-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminOneOffFixRoute = ApiAdminOneOffFixRouteImport.update({
+  id: '/api/admin/one-off-fix',
+  path: '/api/admin/one-off-fix',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
   '/booking/return': typeof BookingReturnRoute
+  '/api/admin/one-off-fix': typeof ApiAdminOneOffFixRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
   '/booking/return': typeof BookingReturnRoute
+  '/api/admin/one-off-fix': typeof ApiAdminOneOffFixRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/toyyibpay-callback': typeof ApiToyyibpayCallbackRoute
   '/booking/return': typeof BookingReturnRoute
+  '/api/admin/one-off-fix': typeof ApiAdminOneOffFixRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,6 +80,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/toyyibpay-callback'
     | '/booking/return'
+    | '/api/admin/one-off-fix'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -78,6 +88,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/toyyibpay-callback'
     | '/booking/return'
+    | '/api/admin/one-off-fix'
   id:
     | '__root__'
     | '/'
@@ -85,6 +96,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/toyyibpay-callback'
     | '/booking/return'
+    | '/api/admin/one-off-fix'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -93,6 +105,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiToyyibpayCallbackRoute: typeof ApiToyyibpayCallbackRoute
   BookingReturnRoute: typeof BookingReturnRoute
+  ApiAdminOneOffFixRoute: typeof ApiAdminOneOffFixRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -132,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/one-off-fix': {
+      id: '/api/admin/one-off-fix'
+      path: '/api/admin/one-off-fix'
+      fullPath: '/api/admin/one-off-fix'
+      preLoaderRoute: typeof ApiAdminOneOffFixRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -141,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiToyyibpayCallbackRoute: ApiToyyibpayCallbackRoute,
   BookingReturnRoute: BookingReturnRoute,
+  ApiAdminOneOffFixRoute: ApiAdminOneOffFixRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
