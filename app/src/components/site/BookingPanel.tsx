@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 
@@ -17,8 +17,15 @@ function toDateOnly(d: Date) {
 }
 
 export function BookingPanel({ checkIn, checkOut }: { checkIn: Date; checkOut: Date }) {
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [fieldError, setFieldError] = useState<"name" | "email" | "phone" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   const { data: pricing, isLoading } = useQuery({
     queryKey: ["hostex-pricing"],
@@ -32,12 +39,34 @@ export function BookingPanel({ checkIn, checkOut }: { checkIn: Date; checkOut: D
   }, [pricing, checkIn, checkOut]);
 
   async function handleReserve() {
+    if (!guestName.trim()) {
+      setFieldError("name");
+      nameRef.current?.focus();
+      return;
+    }
+    if (!guestEmail.trim() || !guestEmail.includes("@")) {
+      setFieldError("email");
+      emailRef.current?.focus();
+      return;
+    }
+    if (!guestPhone.trim()) {
+      setFieldError("phone");
+      phoneRef.current?.focus();
+      return;
+    }
+    setFieldError(null);
     setSubmitError(null);
     setSubmitting(true);
 
     try {
       const result = await createBookingBill({
-        data: { checkInDate: toDateOnly(checkIn), checkOutDate: toDateOnly(checkOut) },
+        data: {
+          checkInDate: toDateOnly(checkIn),
+          checkOutDate: toDateOnly(checkOut),
+          guestName,
+          guestEmail,
+          guestPhone,
+        },
       });
       if (result.ok) {
         window.location.href = result.paymentUrl;
@@ -100,13 +129,46 @@ export function BookingPanel({ checkIn, checkOut }: { checkIn: Date; checkOut: D
         )}
       </div>
 
-      {submitError && <p className="mt-4 text-sm text-coral">{submitError}</p>}
+      <div className="mt-6 grid gap-3">
+        <input
+          ref={nameRef}
+          type="text"
+          value={guestName}
+          onChange={(e) => setGuestName(e.target.value)}
+          placeholder="Full name"
+          className={`rounded-xl border bg-ink-2 px-4 py-3 text-sm text-cream placeholder:text-cream-dim/60 focus:outline-none ${
+            fieldError === "name" ? "border-coral" : "border-cream/10 focus:border-coral/60"
+          }`}
+        />
+        <input
+          ref={emailRef}
+          type="email"
+          value={guestEmail}
+          onChange={(e) => setGuestEmail(e.target.value)}
+          placeholder="Email"
+          className={`rounded-xl border bg-ink-2 px-4 py-3 text-sm text-cream placeholder:text-cream-dim/60 focus:outline-none ${
+            fieldError === "email" ? "border-coral" : "border-cream/10 focus:border-coral/60"
+          }`}
+        />
+        <input
+          ref={phoneRef}
+          type="tel"
+          value={guestPhone}
+          onChange={(e) => setGuestPhone(e.target.value)}
+          placeholder="WhatsApp / phone number"
+          className={`rounded-xl border bg-ink-2 px-4 py-3 text-sm text-cream placeholder:text-cream-dim/60 focus:outline-none ${
+            fieldError === "phone" ? "border-coral" : "border-cream/10 focus:border-coral/60"
+          }`}
+        />
+      </div>
+
+      {submitError && <p className="mt-3 text-sm text-coral">{submitError}</p>}
 
       <div className="mt-5">
         <ReserveNowButton onClick={handleReserve} disabled={!quote} loading={submitting} />
       </div>
       <p className="mt-3 text-center font-mono text-[11px] uppercase tracking-wide text-cream-dim">
-        Secure payment via ToyyibPay (sandbox) — you&rsquo;ll enter your contact details there
+        Secure payment via ToyyibPay (sandbox)
       </p>
     </div>
   );

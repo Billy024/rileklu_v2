@@ -54,6 +54,9 @@ function isDateOnly(value: unknown): value is string {
 export type CreateBookingBillInput = {
   checkInDate: string; // YYYY-MM-DD
   checkOutDate: string; // YYYY-MM-DD
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
 };
 
 export type CreateBookingBillResult =
@@ -61,15 +64,18 @@ export type CreateBookingBillResult =
 
 // Re-validates everything server-side (never trusts client-sent dates or
 // amounts), writes a pending booking row, then opens a ToyyibPay bill for
-// it. No guest name/email/phone here: ToyyibPay's own checkout page is what
-// actually collects that (its hosted form doesn't reflect billTo/billEmail/
-// billPhone back into its fields anyway, confirmed live), and
-// finalizeBooking reads the guest's real answers back from ToyyibPay's
-// transaction record once payment completes.
+// it. Guest name/email/phone are collected here (not on ToyyibPay's page)
+// because ToyyibPay's billPayorInfo="1" PREFILLS AND LOCKS its checkout
+// fields with whatever we send — confirmed by inspecting the raw checkout
+// HTML directly — so this is genuinely the only place that data can come
+// from; there's no benefit to asking the guest to type it twice.
 export const createBookingBill = createServerFn({ method: "POST" })
   .validator((input: CreateBookingBillInput) => {
     if (!isDateOnly(input.checkInDate) || !isDateOnly(input.checkOutDate)) {
       throw new Error("invalid_dates");
+    }
+    if (!input.guestName?.trim() || !input.guestEmail?.trim() || !input.guestPhone?.trim()) {
+      throw new Error("missing_guest_info");
     }
     return input;
   })
@@ -103,10 +109,16 @@ export const createBookingBill = createServerFn({ method: "POST" })
     // instead of anything we'd try to pass through here.
     const returnUrl = `${SITE_URL}/booking/return`;
     const callbackUrl = `${SITE_URL}/api/toyyibpay-callback`;
+    const guestName = data.guestName.trim();
+    const guestEmail = data.guestEmail.trim();
+    const guestPhone = data.guestPhone.trim();
 
     const bill = await createToyyibPayBill({
       orderId,
       amountMyr: quote.totalAmount,
+      guestName,
+      guestEmail,
+      guestPhone,
       returnUrl,
       callbackUrl,
     });
@@ -117,6 +129,9 @@ export const createBookingBill = createServerFn({ method: "POST" })
       checkInDate: data.checkInDate,
       checkOutDate: data.checkOutDate,
       nights: quote.nights,
+      guestName,
+      guestEmail,
+      guestPhone,
       accommodationAmount: Math.round(quote.accommodationAmount * 100),
       cleaningFeeAmount: Math.round(quote.cleaningFee * 100),
       totalAmount: Math.round(quote.totalAmount * 100),

@@ -9,11 +9,10 @@ import {
   claimBookingForFinalization,
   getBookingByOrderId,
   markBookingConfirmed,
-  updateBookingGuestInfo,
   type BookingStatus,
 } from "../db.server";
 import { createHostexReservation } from "./hostex.server";
-import { getToyyibPayTransaction } from "./toyyibpay.server";
+import { getToyyibPayBillStatus } from "./toyyibpay.server";
 
 export type FinalizeResult = {
   status: BookingStatus | "not_found";
@@ -24,9 +23,10 @@ export type FinalizeResult = {
 // callback, and the guest's own return-page visit reconciling against
 // ToyyibPay directly (ToyyibPay does not retry a failed callback on its
 // own, so the return page is a real safety net, not just a status screen).
-// Verifies payment itself (never trusts a caller's own gate), reads back
-// the guest's name/email/phone from ToyyibPay's own transaction record
-// (that's what actually collects it now — see toyyibpay.server.ts), and
+// Verifies payment itself (never trusts a caller's own gate) before doing
+// anything — guest_name/email/phone are already the guest's real info,
+// collected on our own site and used to prefill+lock ToyyibPay's checkout
+// (see toyyibpay.server.ts), so no extra lookup is needed for those.
 // `claimBookingForFinalization` guarantees only ONE of the two paths ever
 // actually calls Hostex for a given order.
 export async function finalizeBooking(orderId: string): Promise<FinalizeResult> {
@@ -37,8 +37,8 @@ export async function finalizeBooking(orderId: string): Promise<FinalizeResult> 
   }
   if (!existing.bill_code) return { status: existing.status, reservationCode: null };
 
-  const transaction = await getToyyibPayTransaction(existing.bill_code);
-  if (transaction.status !== "success") {
+  const billStatus = await getToyyibPayBillStatus(existing.bill_code);
+  if (billStatus !== "success") {
     return { status: existing.status, reservationCode: null };
   }
 
@@ -46,17 +46,12 @@ export async function finalizeBooking(orderId: string): Promise<FinalizeResult> 
   if (!booking) return { status: "not_found", reservationCode: null };
   if (!claimed) return { status: booking.status, reservationCode: booking.hostex_reservation_code };
 
-  const guestName = transaction.payerName || "Guest";
-  const guestEmail = transaction.payerEmail || "";
-  const guestPhone = transaction.payerPhone || "";
-  await updateBookingGuestInfo(orderId, { guestName, guestEmail, guestPhone });
-
   const result = await createHostexReservation({
     checkInDate: booking.check_in_date,
     checkOutDate: booking.check_out_date,
-    guestName,
-    guestEmail,
-    guestPhone,
+    guestName: booking.guest_name,
+    guestEmail: booking.guest_email,
+    guestPhone: booking.guest_phone,
     totalAmountMyr: booking.total_amount / 100,
     orderId: booking.order_id,
   });
