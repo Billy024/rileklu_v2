@@ -21,25 +21,31 @@ export type PriceQuote = {
 // A "night" is identified by the date the guest checks in for it. Friday
 // and Saturday nights bill at the weekend rate; every other night bills at
 // the weekday rate.
+//
+// Deliberately uses LOCAL Date accessors, not UTC ones: on the client,
+// checkIn/checkOut are built from the calendar grid's local-midnight Date
+// objects, so local accessors read back the calendar day the guest actually
+// clicked regardless of the browser's timezone. On the server (a Cloudflare
+// Worker, always running in UTC), "local" and UTC are the same thing, and
+// the server builds its Date from an explicit `...T00:00:00Z` string — so
+// the same local-accessor code gives the correct, matching answer in both
+// places. Using getUTC* here would silently shift the date by a day for any
+// guest/browser in a timezone ahead of UTC.
 function isWeekendNight(date: Date): boolean {
-  const day = date.getUTCDay(); // 0=Sun ... 5=Fri, 6=Sat
+  const day = date.getDay(); // 0=Sun ... 5=Fri, 6=Sat
   return day === 5 || day === 6;
 }
 
 export function quotePrice(checkIn: Date, checkOut: Date, rates: LiveRates): PriceQuote {
   let nights = 0;
   let accommodationAmount = 0;
-  const cursor = new Date(
-    Date.UTC(checkIn.getUTCFullYear(), checkIn.getUTCMonth(), checkIn.getUTCDate()),
-  );
-  const end = new Date(
-    Date.UTC(checkOut.getUTCFullYear(), checkOut.getUTCMonth(), checkOut.getUTCDate()),
-  );
+  const cursor = new Date(checkIn.getFullYear(), checkIn.getMonth(), checkIn.getDate());
+  const end = new Date(checkOut.getFullYear(), checkOut.getMonth(), checkOut.getDate());
 
   while (cursor < end) {
     nights += 1;
     accommodationAmount += isWeekendNight(cursor) ? rates.weekendRate : rates.weekdayRate;
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    cursor.setDate(cursor.getDate() + 1);
   }
 
   return {
