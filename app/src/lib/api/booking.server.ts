@@ -9,6 +9,7 @@ import {
   claimBookingForFinalization,
   getBookingByOrderId,
   markBookingConfirmed,
+  markBookingFailed,
   type BookingStatus,
 } from "../db.server";
 import { createHostexReservation } from "./hostex.server";
@@ -38,7 +39,15 @@ export async function finalizeBooking(orderId: string): Promise<FinalizeResult> 
   if (!existing.bill_code) return { status: existing.status, reservationCode: null };
 
   const billStatus = await getToyyibPayBillStatus(existing.bill_code);
+  // "failed" is a definite answer from ToyyibPay — record it as such rather
+  // than leaving the booking (and the guest-facing copy) stuck on
+  // "pending_payment", which reads as merely uncertain, not failed.
+  if (billStatus === "failed") {
+    await markBookingFailed(orderId);
+    return { status: "failed", reservationCode: null };
+  }
   if (billStatus !== "success") {
+    // "pending" or "unknown" — genuinely undecided, not a failure.
     return { status: existing.status, reservationCode: null };
   }
 

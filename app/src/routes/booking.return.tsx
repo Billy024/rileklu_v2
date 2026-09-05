@@ -52,7 +52,15 @@ function BookingReturnPage() {
   const copy = COPY[state];
 
   return (
-    <section className="flex min-h-dvh items-center justify-center bg-ink px-5 py-24">
+    <section className="flex min-h-dvh flex-col items-center justify-center bg-ink px-5 py-24">
+      {state === "checking" && (
+        <div
+          role="alert"
+          className="fixed inset-x-0 top-0 z-10 bg-coral px-5 py-2.5 text-center font-mono text-xs uppercase tracking-wide text-ink"
+        >
+          Please don&rsquo;t close or refresh this page until your payment is confirmed
+        </div>
+      )}
       <div className="w-full max-w-md rounded-3xl bg-ink-2 p-8 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-coral">RilekLU</p>
         <h1 className="mt-4 text-2xl font-semibold tracking-tighter text-cream">{copy.title}</h1>
