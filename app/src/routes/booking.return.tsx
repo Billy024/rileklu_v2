@@ -105,9 +105,9 @@ const COPY: Record<
   },
   confirmed: {
     title: "You're booked!",
-    body: "Payment received and your dates are locked in. Pri will reach out on WhatsApp with your check-in details.",
-    showWhatsApp: true,
-    showViewCalendar: false,
+    body: "Payment received and your dates are locked in. Our team will be reaching out to you soon on your bookings.",
+    showWhatsApp: false,
+    showViewCalendar: true,
   },
   paid: {
     title: "Payment received",
